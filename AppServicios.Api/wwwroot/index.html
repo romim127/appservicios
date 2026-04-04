@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AppServicios | El mundo del trabajo en una app</title>
+  <meta name="description" content="AppServicios conecta clientes, profesionales y oportunidades con una experiencia moderna, clara y adaptable a modo claro, oscuro o sistema." />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AppServicios" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-orb bg-orb-a"></div>
+  <div class="bg-orb bg-orb-b"></div>
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#inicio" aria-label="Ir al inicio de AppServicios">
+      <span class="brand-mark">AS</span>
+      <span>
+        <strong>AppServicios</strong>
+        <small>Trabajo real, experiencia moderna</small>
+      </span>
+    </a>
+
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="#paneles">Experiencia</a>
+      <a href="#acceso">Acceso</a>
+      <a href="#dashboard-cliente">Dashboard</a>
+      <a href="#dashboard-profesional">Panel Pro</a>
+      <a href="#experiencia-app">Demo App</a>
+      <a href="#rubros">Rubros</a>
+      <a href="#flujo">Cómo funciona</a>
+      <a href="/swagger/index.html">API</a>
+    </nav>
+
+    <div class="theme-switch" role="group" aria-label="Cambiar tema visual">
+      <button type="button" data-theme-choice="light">Claro</button>
+      <button type="button" data-theme-choice="dark">Oscuro</button>
+      <button type="button" data-theme-choice="system">Sistema</button>
+    </div>
+  </header>
+
+  <main class="shell" id="inicio">
+    <section class="hero">
+      <div class="hero-copy glass-panel">
+        <p class="eyebrow">⚡ El mundo del trabajo, en una sola app</p>
+        <h1>Conectá personas, oficios y oportunidades con una estética potente y fácil de usar.</h1>
+        <p class="hero-text">
+          Diseñamos una primera pantalla con identidad propia: brillo sutil tipo <strong>neón</strong>, alto contraste para buena lectura,
+          tipografía moderna y selector de tema <strong>claro / oscuro / sistema</strong> para que cada persona la use como más cómoda le resulte.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#rubros">Explorar rubros</a>
+          <button class="btn btn-secondary" id="installAppButton" type="button" hidden>Instalar app</button>
+          <a class="btn btn-secondary" href="/swagger/index.html">Probar API</a>
+        </div>
+
+        <p class="mini-note">Modo Android listo: puedes instalar esta experiencia como app desde Chrome cuando esté publicada por HTTPS.</p>
+
+        <div class="status-row">
+          <div class="status-card">
+            <span class="status-dot"></span>
+            <div>
+              <small>Backend</small>
+              <strong id="healthStatus">Verificando...</strong>
+            </div>
+          </div>
+          <div class="status-card">
+            <small>Tema activo</small>
+            <strong id="themeLabel">Sistema</strong>
+          </div>
+          <div class="status-card">
+            <small>Rubros cargados</small>
+            <strong id="rubroCount">--</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="mobile-mock glass-panel">
+          <div class="mobile-top">
+            <span class="live-pill">● En vivo</span>
+            <strong>Panel laboral</strong>
+          </div>
+
+          <div class="job-card neon-border">
+            <div>
+              <small>Solicitud destacada</small>
+              <h3 id="featuredServiceName">Electricista urgente</h3>
+            </div>
+            <span class="badge">Hoy</span>
+          </div>
+
+          <div class="mini-stats">
+            <article>
+              <strong id="serviceCount">--</strong>
+              <span>servicios</span>
+            </article>
+            <article>
+              <strong id="proCount">--</strong>
+              <span>profesionales</span>
+            </article>
+            <article>
+              <strong>3 temas</strong>
+              <span>visuales</span>
+            </article>
+          </div>
+
+          <div class="queue-list">
+            <div class="queue-item">
+              <span>🛠️ Plomería</span>
+              <strong>+18 ofertas</strong>
+            </div>
+            <div class="queue-item">
+              <span>⚙️ Técnica</span>
+              <strong>+9 perfiles</strong>
+            </div>
+            <div class="queue-item">
+              <span>🏥 Enfermería</span>
+              <strong>Alta demanda</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards-section" id="paneles">
+      <article class="feature-card glass-panel">
+        <p class="feature-icon">🙋</p>
+        <h2>Cliente</h2>
+        <p>Publica una necesidad, compara perfiles y elige quién te ayuda según cercanía, reputación y precio.</p>
+      </article>
+
+      <article class="feature-card glass-panel">
+        <p class="feature-icon">👷</p>
+        <h2>Profesional</h2>
+        <p>Organiza tus oportunidades, muestra tu experiencia y gestiona tus ingresos desde una vista clara y ágil.</p>
+      </article>
+
+      <article class="feature-card glass-panel">
+        <p class="feature-icon">🎨</p>
+        <h2>Identidad visual</h2>
+        <p>Brillo sutil, contraste alto y soporte para <strong>claro</strong>, <strong>oscuro</strong> y <strong>sistema</strong> sin perder legibilidad.</p>
+      </article>
+    </section>
+
+    <section class="app-lab glass-panel" id="experiencia-app">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Demo UX/UI interna</p>
+          <h2>Así puede sentirse la app por dentro</h2>
+        </div>
+        <span class="pill" id="experienceState">Modo cliente</span>
+      </div>
+
+      <p class="section-text">
+        Esta vista ya simula una experiencia real de producto: paneles por rol, publicación rápida de trabajos y una interfaz adaptable para cliente, profesional o coordinación.
+      </p>
+
+      <div class="role-toggle" role="tablist" aria-label="Elegir experiencia de uso">
+        <button type="button" class="role-tab is-active" data-role-tab="cliente">Cliente</button>
+        <button type="button" class="role-tab" data-role-tab="profesional">Profesional</button>
+        <button type="button" class="role-tab" data-role-tab="coordinacion">Coordinación</button>
+      </div>
+
+      <div class="experience-grid">
+        <div class="dashboard-shell">
+          <aside class="dashboard-sidebar">
+            <span class="dashboard-brand">PulseOS</span>
+            <button type="button" class="sidebar-chip is-active">Inicio</button>
+            <button type="button" class="sidebar-chip">Solicitudes</button>
+            <button type="button" class="sidebar-chip">Mensajes</button>
+            <button type="button" class="sidebar-chip">Perfil</button>
+          </aside>
+
+          <div class="dashboard-main">
+            <section class="dashboard-view is-active" data-role-view="cliente">
+              <div class="dashboard-banner">
+                <div>
+                  <small>Cliente · flujo express</small>
+                  <h3>Publica un trabajo y compara opciones en minutos</h3>
+                </div>
+                <span class="badge">UX clara</span>
+              </div>
+
+              <div class="dashboard-kpis">
+                <article class="kpi-card">
+                  <strong>2 pasos</strong>
+                  <span>para pedir ayuda</span>
+                </article>
+                <article class="kpi-card">
+                  <strong>mapa + lista</strong>
+                  <span>para decidir rápido</span>
+                </article>
+                <article class="kpi-card">
+                  <strong>presupuesto visible</strong>
+                  <span>sin fricción</span>
+                </article>
+              </div>
+
+              <div class="task-list">
+                <div class="task-item"><span>📍</span><div><strong>Ubicación detectada</strong><small>Se ordenan perfiles cercanos</small></div></div>
+                <div class="task-item"><span>💬</span><div><strong>Chat directo</strong><small>Confirmación y dudas en la misma pantalla</small></div></div>
+                <div class="task-item"><span>⭐</span><div><strong>Confianza visual</strong><small>Opiniones y reputación destacadas</small></div></div>
+              </div>
+            </section>
+
+            <section class="dashboard-view" data-role-view="profesional">
+              <div class="dashboard-banner">
+                <div>
+                  <small>Profesional · tablero operativo</small>
+                  <h3>Organiza ingresos, radio de alcance y nuevas oportunidades</h3>
+                </div>
+                <span class="badge">Productivo</span>
+              </div>
+
+              <div class="dashboard-kpis">
+                <article class="kpi-card">
+                  <strong>meta mensual</strong>
+                  <span>siempre visible</span>
+                </article>
+                <article class="kpi-card">
+                  <strong>aceptar o filtrar</strong>
+                  <span>por distancia y tarifa</span>
+                </article>
+                <article class="kpi-card">
+                  <strong>perfil potente</strong>
+                  <span>rubros + certificados</span>
+                </article>
+              </div>
+
+              <div class="task-list">
+                <div class="task-item"><span>💸</span><div><strong>Ganancia proyectada</strong><small>Seguimiento claro de objetivos</small></div></div>
+                <div class="task-item"><span>🧭</span><div><strong>Alcance configurable</strong><small>Visualización simple del radio de trabajo</small></div></div>
+                <div class="task-item"><span>🛡️</span><div><strong>Confianza profesional</strong><small>Certificados y experiencia destacados</small></div></div>
+              </div>
+            </section>
+
+            <section class="dashboard-view" data-role-view="coordinacion">
+              <div class="dashboard-banner">
+                <div>
+                  <small>Coordinación · visión global</small>
+                  <h3>Observa demanda, cuellos de botella y salud de la operación</h3>
+                </div>
+                <span class="badge">Estratégico</span>
+              </div>
+
+              <div class="dashboard-kpis">
+                <article class="kpi-card">
+                  <strong id="coordMiniBacklog">--</strong>
+                  <span>pendientes vs completadas</span>
+                </article>
+                <article class="kpi-card">
+                  <strong id="coordMiniHotRubro">--</strong>
+                  <span>rubro con mayor movimiento</span>
+                </article>
+                <article class="kpi-card">
+                  <strong id="coordMiniHealth">--</strong>
+                  <span>salud operativa actual</span>
+                </article>
+              </div>
+
+              <div class="task-list">
+                <div class="task-item"><span>📈</span><div><strong>Demanda en tiempo real</strong><small id="coordMiniDemand">Cargando volumen operativo...</small></div></div>
+                <div class="task-item"><span>🚦</span><div><strong>Estados críticos</strong><small id="coordMiniAlerts">Las alertas estratégicas aparecerán aquí.</small></div></div>
+                <div class="task-item"><span>🧠</span><div><strong>UX orientada a decisiones</strong><small>Scrollea al panel ejecutivo para ver tablas, alertas y gráficos circulares.</small></div></div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <aside class="composer-panel glass-panel">
+          <p class="eyebrow">Simulación rápida</p>
+          <h3>Publica una necesidad y mira cómo se vería</h3>
+
+          <label class="form-field">
+            <span>Servicio</span>
+            <select id="servicePicker">
+              <option value="">Cargando servicios...</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Urgencia</span>
+            <select id="urgencyPicker">
+              <option>Hoy</option>
+              <option>Mañana</option>
+              <option>Esta semana</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Presupuesto estimado</span>
+            <input type="range" id="budgetRange" min="5000" max="150000" step="1000" value="35000" />
+          </label>
+
+          <strong class="budget-value" id="budgetValue">$ 35.000</strong>
+
+          <label class="form-field">
+            <span>Mensaje</span>
+            <textarea id="messageInput" rows="4">Necesito resolverlo pronto y comparar profesionales cercanos con buena reputación.</textarea>
+          </label>
+
+          <div class="preview-card neon-border">
+            <small>Vista previa de la solicitud</small>
+            <h3 id="previewService">Servicio en preparación</h3>
+            <p id="previewMessage">Necesito resolverlo pronto y comparar profesionales cercanos con buena reputación.</p>
+            <div class="preview-meta">
+              <span id="previewUrgency">Hoy</span>
+              <span id="previewBudget">$ 35.000</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="access-hub glass-panel" id="acceso">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Acceso inteligente</p>
+          <h2>Ingreso simple, moderno y pensado para cada tipo de usuario</h2>
+        </div>
+        <span class="pill" id="accessState">Inicio cliente</span>
+      </div>
+
+      <p class="section-text">
+        La idea es que desde el primer login ya se sienta una experiencia clara: pocas decisiones, alta legibilidad y una entrada visual alineada al mundo del trabajo.
+      </p>
+
+      <div class="access-grid">
+        <div class="auth-card glass-panel">
+          <div class="auth-tabs" role="tablist" aria-label="Elegir modo de acceso">
+            <button type="button" class="auth-tab is-active" data-auth-tab="login">Iniciar sesión</button>
+            <button type="button" class="auth-tab" data-auth-tab="register">Crear cuenta</button>
+          </div>
+
+          <div class="role-mini-switch" role="group" aria-label="Elegir perfil principal">
+            <button type="button" class="role-pill is-active" data-account-role="cliente">Cliente</button>
+            <button type="button" class="role-pill" data-account-role="profesional">Profesional</button>
+          </div>
+
+          <div class="auth-view is-active" data-auth-view="login">
+            <label class="form-field">
+              <span>Email</span>
+              <input class="text-input" id="loginEmailInput" type="email" placeholder="tuemail@appservicios.com" />
+            </label>
+            <label class="form-field">
+              <span>Contraseña</span>
+              <input class="text-input" id="loginPasswordInput" type="password" placeholder="Tu contraseña" />
+            </label>
+            <div class="auth-footer-row">
+              <span class="mini-note">Acceso real por email y contraseña, con sesión persistente por rol</span>
+              <button type="button" class="btn btn-primary" id="loginButton">Entrar</button>
+            </div>
+            <p class="mini-note">Admin demo: <strong>admin@appservicios.com</strong> · clave <strong>Admin123!</strong></p>
+            <p class="mini-note register-feedback" id="loginFeedback">Inicia sesión con una cuenta ya registrada para abrir tu panel personalizado.</p>
+          </div>
+
+          <div class="auth-view" data-auth-view="register">
+            <label class="form-field">
+              <span>Nombre completo</span>
+              <input class="text-input" id="registerNameInput" type="text" value="María López" />
+            </label>
+            <label class="form-field">
+              <span>Email</span>
+              <input class="text-input" id="registerEmailInput" type="email" value="maria@appservicios.com" />
+            </label>
+
+            <div class="register-split">
+              <label class="form-field">
+                <span>Teléfono</span>
+                <input class="text-input" id="registerPhoneInput" type="text" value="1122334455" />
+              </label>
+              <label class="form-field">
+                <span>DNI</span>
+                <input class="text-input" id="registerDniInput" type="text" value="30111222" />
+              </label>
+            </div>
+
+            <div class="register-split">
+              <label class="form-field">
+                <span>Fecha de nacimiento</span>
+                <input class="text-input" id="registerBirthDateInput" type="date" value="1994-06-10" />
+              </label>
+              <label class="form-field">
+                <span>Ubicación base</span>
+                <input class="text-input" id="registerLocationInput" type="text" value="CABA - Buenos Aires" />
+              </label>
+            </div>
+
+            <label class="form-field">
+              <span>Contraseña de acceso</span>
+              <input class="text-input" id="registerPasswordInput" type="password" value="12345678" />
+            </label>
+
+            <label class="form-field">
+              <span>Rol inicial</span>
+              <input class="text-input" type="text" id="rolePreviewInput" value="Cliente" readonly />
+            </label>
+
+            <div class="client-register-fields" id="clientRegisterFields">
+              <label class="form-field">
+                <span>Preferencias como cliente</span>
+                <textarea id="clientPreferencesInput" rows="3">Necesito respuesta rápida, claridad y seguimiento por mensaje.</textarea>
+              </label>
+            </div>
+
+            <div class="pro-onboarding is-hidden" id="proOnboarding">
+              <div class="mini-block-head">
+                <strong>Rubros laborales principales</strong>
+                <small>Selecciona el sector donde mejor encajan tus tareas o experiencia.</small>
+              </div>
+
+              <div class="sector-grid" id="sectorGrid">
+                <button type="button" class="sector-card" data-sector="TECNOLOGIA Y SISTEMAS">Tecnología y Sistemas</button>
+                <button type="button" class="sector-card" data-sector="SALUD Y ENFERMERIA">Salud y Enfermería</button>
+                <button type="button" class="sector-card" data-sector="PRODUCCION, MANUFACTURA Y OPERARIOS">Producción, Manufactura y Operarios</button>
+                <button type="button" class="sector-card" data-sector="COMERCIO VENTAS Y LOGISTICA">Comercio, Ventas y Logística</button>
+                <button type="button" class="sector-card" data-sector="ADMINISTRACION CONTABILIDAD Y FINANZAS">Administración, Contabilidad y Finanzas</button>
+                <button type="button" class="sector-card" data-sector="HOSTELERIA TURISMO Y GASTRONOMIA">Hostelería, Turismo y Gastronomía</button>
+                <button type="button" class="sector-card" data-sector="CONSTRUCCION Y SERVICIOS GENERALES">Construcción y Servicios Generales</button>
+              </div>
+
+              <label class="form-field">
+                <span>Rubro sugerido / elegido</span>
+                <input class="text-input" type="text" id="selectedSectorInput" value="Selecciona o pide ayuda a la IA" readonly />
+              </label>
+
+              <div class="register-split">
+                <label class="form-field">
+                  <span>Años de experiencia</span>
+                  <input class="text-input" id="proExperienceInput" type="number" min="0" max="80" value="5" />
+                </label>
+                <label class="form-field">
+                  <span>Tarifa base (ARS)</span>
+                  <input class="text-input" id="proRateInput" type="number" min="0" step="500" value="25000" />
+                </label>
+              </div>
+
+              <div class="register-split">
+                <label class="form-field">
+                  <span>Radio de alcance (km)</span>
+                  <input class="text-input" id="proReachInput" type="number" min="1" max="1000" value="15" />
+                </label>
+                <label class="form-field">
+                  <span>Meta mensual (ARS)</span>
+                  <input class="text-input" id="proGoalInput" type="number" min="0" step="1000" value="800000" />
+                </label>
+              </div>
+
+              <label class="form-field">
+                <span>Descripción profesional</span>
+                <textarea id="proDescriptionInput" rows="4">Técnico con experiencia en instalaciones, mantenimiento y atención a domicilio para resolver problemas reales.</textarea>
+              </label>
+
+              <div class="ai-helper neon-border">
+                <strong>¿Quieres que te ayude a identificar tu rubro?</strong>
+                <p>Piensa en tus habilidades, conocimientos técnicos y experiencia previa para orientarte hacia el sector más adecuado.</p>
+
+                <label class="form-field">
+                  <span>Si no sabes cómo identificarlo, escribe qué haces</span>
+                  <textarea id="aiRubroDescription" rows="4">Instalo, reparo y mantengo equipos o realizo tareas técnicas para clientes.</textarea>
+                </label>
+
+                <div class="ai-helper-actions">
+                  <button type="button" class="btn btn-secondary btn-small" id="aiRubroButton">La IA me ayuda a identificarlo</button>
+                  <span class="mini-note" id="aiRubroResult">La IA te orientará hacia el rubro más adecuado.</span>
+                </div>
+              </div>
+
+              <div class="terms-box">
+                <strong>Términos y Condiciones profesionales</strong>
+                <ul>
+                  <li>La inscripción profesional en la app tiene un costo de <strong>ARS 2.500</strong>.</li>
+                  <li>La orientación con IA es una ayuda para ubicar el rubro más adecuado.</li>
+                  <li>Debes aceptar las condiciones antes de continuar.</li>
+                </ul>
+                <label class="terms-check">
+                  <input type="checkbox" id="termsCheckbox" />
+                  Acepto los <a href="/terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a> y el abono de ARS 2.500.
+                </label>
+              </div>
+
+              <div class="payment-box neon-border">
+                <div class="payment-header">
+                  <div>
+                    <strong>Pago profesional · ARS 2.500</strong>
+                    <small>Genera la orden y abre Checkout Pro de Mercado Pago en sandbox.</small>
+                  </div>
+                  <span class="pill payment-pill" id="paymentState">Pendiente de pago</span>
+                </div>
+
+                <div class="payment-summary">
+                  <span>Alta única profesional</span>
+                  <strong>ARS 2.500</strong>
+                </div>
+
+                <div class="ai-helper-actions">
+                  <button type="button" class="btn btn-secondary btn-small" id="startPaymentButton">Generar orden MP</button>
+                  <a class="btn btn-primary btn-small is-disabled payment-link-disabled" id="mercadoPagoLinkButton" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Abrir Mercado Pago</a>
+                  <button type="button" class="btn btn-primary btn-small is-disabled" id="verifyPaymentButton" disabled>Verificar pago MP</button>
+                  <button type="button" class="btn btn-secondary btn-small is-disabled" id="confirmPaymentButton" disabled>Aprobar pago demo</button>
+                </div>
+
+                <p class="mini-note register-feedback" id="paymentFeedback">Primero acepta los términos y luego genera la orden para Mercado Pago.</p>
+              </div>
+            </div>
+
+            <div class="auth-footer-row">
+              <span class="mini-note" id="registerNote">Onboarding corto con foco en confianza y claridad</span>
+              <button type="button" class="btn btn-secondary" id="registerContinueButton">Crear cuenta cliente</button>
+            </div>
+            <p class="mini-note register-feedback" id="registerFeedback">Este alta ya puede guardar el perfil en el backend.</p>
+          </div>
+        </div>
+
+        <div class="onboarding-card neon-border">
+          <small id="welcomeCaption">Bienvenida cliente</small>
+          <h3 id="welcomeTitle">Publica una necesidad y recibe opciones con contexto claro</h3>
+          <p id="welcomeText">
+            La experiencia prioriza lo importante: ubicación, urgencia, presupuesto y perfiles confiables. Todo se entiende rápido y se lee bien en cualquier tema.
+          </p>
+
+          <div class="advantage-list">
+            <div class="advantage-item"><span>✨</span><div><strong>Menos fricción</strong><small>formularios cortos y jerarquía visual limpia</small></div></div>
+            <div class="advantage-item"><span>🔐</span><div><strong>Confianza primero</strong><small>validaciones y reputación visibles desde el inicio</small></div></div>
+            <div class="advantage-item"><span>🎯</span><div><strong>Diseño con intención</strong><small>neón legible en oscuro y máxima claridad en modo claro</small></div></div>
+          </div>
+
+          <div class="session-card glass-panel">
+            <div class="session-card-head">
+              <strong>Tu sesión actual</strong>
+              <button type="button" class="btn btn-secondary btn-small session-action is-hidden" id="logoutButton">Cerrar sesión</button>
+            </div>
+            <div class="session-summary" id="sessionSummary">
+              <strong>Sin sesión activa</strong>
+              <small>Inicia sesión para ver tu panel personalizado y trabajar con tu cuenta real.</small>
+            </div>
+            <div class="notifications-panel">
+              <div class="request-list-head">
+                <strong class="notification-heading">Notificaciones <span class="notification-counter is-empty" id="notificationsCounter">0</span></strong>
+                <button type="button" class="btn btn-secondary btn-small" id="notificationsRefreshButton">Actualizar</button>
+              </div>
+              <div class="request-list" id="notificationsList">
+                <div class="request-item">
+                  <strong>Sin novedades</strong>
+                  <small>Las alertas relevantes aparecerán aquí.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="security-strip">
+            <span>Claro / Oscuro / Sistema</span>
+            <span>UX orientada a trabajo real</span>
+            <span>Acceso rápido</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="client-dashboard glass-panel" id="dashboard-cliente">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Dashboard cliente en vivo</p>
+          <h2>Publica solicitudes reales y monitorea su estado</h2>
+        </div>
+        <span class="pill" id="requestState">Listo para publicar</span>
+      </div>
+
+      <p class="section-text">
+        Este bloque ya trabaja con endpoints reales. Puedes crear una solicitud y verla inmediatamente en el historial.
+      </p>
+
+      <div class="request-grid">
+        <div class="request-form-panel glass-panel">
+          <label class="form-field">
+            <span>Cliente</span>
+            <select id="requestClientSelect">
+              <option value="">Cargando clientes...</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Servicio</span>
+            <select id="requestServiceSelect">
+              <option value="">Cargando servicios...</option>
+            </select>
+          </label>
+
+          <div class="request-row">
+            <label class="form-field">
+              <span>Fecha requerida</span>
+              <input class="text-input" id="requestDateInput" type="date" />
+            </label>
+
+            <label class="form-field">
+              <span>Presupuesto</span>
+              <input class="text-input" id="requestBudgetInput" type="number" min="1" step="1000" value="35000" />
+            </label>
+          </div>
+
+          <label class="form-field">
+            <span>Ubicación</span>
+            <input class="text-input" id="requestLocationInput" type="text" value="Buenos Aires" />
+          </label>
+
+          <label class="form-field">
+            <span>Descripción del trabajo</span>
+            <textarea id="requestDescriptionInput" rows="4">Necesito resolver este trabajo en el día con una persona profesional y responsable.</textarea>
+          </label>
+
+          <div class="request-actions">
+            <button type="button" class="btn btn-primary" id="requestSubmitButton">Publicar solicitud</button>
+            <span class="mini-note" id="requestFeedback">Completa los datos para publicar.</span>
+          </div>
+        </div>
+
+        <div class="request-list-panel glass-panel">
+          <div class="request-list-head">
+            <strong>Últimas solicitudes</strong>
+            <button type="button" class="btn btn-secondary btn-small" id="requestRefreshButton">Actualizar</button>
+          </div>
+          <div class="request-list" id="requestListContainer">
+            <div class="request-item">
+              <strong>Cargando...</strong>
+              <small>Obteniendo historial de solicitudes</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pro-dashboard glass-panel" id="dashboard-profesional">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Panel profesional en vivo</p>
+          <h2>Administra solicitudes y actualiza estados en tiempo real</h2>
+        </div>
+        <span class="pill" id="proState">Listo para operar</span>
+      </div>
+
+      <p class="section-text">
+        Este panel toma solicitudes pendientes, permite asignarte un trabajo y moverlo a completado sin salir de la interfaz principal.
+      </p>
+
+      <div class="pro-grid">
+        <div class="pro-column glass-panel">
+          <div class="request-list-head">
+            <strong>Solicitudes pendientes</strong>
+            <button type="button" class="btn btn-secondary btn-small" id="proRefreshButton">Actualizar</button>
+          </div>
+
+          <label class="form-field">
+            <span>Profesional activo</span>
+            <select id="proSelect">
+              <option value="">Cargando profesionales...</option>
+            </select>
+          </label>
+
+          <div class="pro-list" id="proPendingList">
+            <div class="request-item">
+              <strong>Cargando...</strong>
+              <small>Buscando solicitudes pendientes</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="pro-column glass-panel">
+          <div class="request-list-head">
+            <strong>Mis trabajos activos</strong>
+            <span class="mini-note" id="proFeedback">Selecciona un profesional para gestionar.</span>
+          </div>
+
+          <div class="pro-list" id="proAssignedList">
+            <div class="request-item">
+              <strong>Sin datos</strong>
+              <small>Cuando aceptes solicitudes aparecerán aquí.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="coordination-dashboard glass-panel" id="dashboard-coordinacion-real">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Panel de admin / coordinación</p>
+          <h2>Un tablero ejecutivo con movimiento real, objetivos y señales estratégicas</h2>
+        </div>
+        <span class="pill" id="coordinationSync">Sincronizando métricas...</span>
+      </div>
+
+      <p class="section-text">
+        Este panel toma datos vivos del sistema para darte una lectura de primer nivel: actividad, conversión, volumen, operación, foco por rubro y alertas de desempeño.
+      </p>
+
+      <div class="coordination-toolbar glass-panel">
+        <label class="form-field">
+          <span>Período</span>
+          <select id="coordDateRange">
+            <option value="7">Últimos 7 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+            <option value="180">Últimos 180 días</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          <span>Ciudad</span>
+          <input class="text-input" id="coordCityFilter" type="text" placeholder="Ej: Buenos Aires" />
+        </label>
+
+        <label class="form-field">
+          <span>Rubro</span>
+          <select id="coordRubroFilter">
+            <option value="">Todos los rubros</option>
+          </select>
+        </label>
+
+        <div class="coordination-toolbar-actions">
+          <button type="button" class="btn btn-secondary" id="coordRefreshButton">Actualizar panel</button>
+          <button type="button" class="btn btn-secondary" id="coordPdfButton">Exportar PDF</button>
+          <button type="button" class="btn btn-primary" id="coordExportButton">Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="coordination-kpis">
+        <article class="coord-card glass-panel">
+          <small>Base operativa</small>
+          <strong id="coordUsersMetric">--</strong>
+          <span id="coordUsersDetail">Usuarios, clientes y profesionales activos</span>
+        </article>
+
+        <article class="coord-card glass-panel">
+          <small>Flujo de trabajo</small>
+          <strong id="coordFlowMetric">--</strong>
+          <span id="coordFlowDetail">Pendientes, aceptadas y completadas</span>
+        </article>
+
+        <article class="coord-card glass-panel">
+          <small>Volumen gestionado</small>
+          <strong id="coordRevenueMetric">--</strong>
+          <span id="coordRevenueDetail">Ticket promedio y operación total</span>
+        </article>
+
+        <article class="coord-card glass-panel">
+          <small>Mensajería y activación</small>
+          <strong id="coordEngagementMetric">--</strong>
+          <span id="coordEngagementDetail">Chat, pagos aprobados y ritmo general</span>
+        </article>
+      </div>
+
+      <div class="coordination-main-grid">
+        <div class="coordination-panel glass-panel">
+          <div class="request-list-head">
+            <strong>Alertas y objetivos</strong>
+            <span class="mini-note" id="coordTargetStatus">Cargando objetivos...</span>
+          </div>
+          <div class="coord-alert-list" id="coordAlertsList">
+            <div class="request-item">
+              <strong>Cargando señales</strong>
+              <small>Evaluando cumplimiento, backlog y activación profesional...</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="coordination-panel glass-panel">
+          <div class="request-list-head">
+            <strong>Gráficos circulares</strong>
+            <span class="mini-note">KPIs vivos</span>
+          </div>
+
+          <div class="coord-donut-grid">
+            <article class="donut-card">
+              <small>Cierre operativo</small>
+              <div class="donut-chart" id="coordOpsDonut"><span>0%</span></div>
+              <p id="coordOpsText">Midiendo proporción de solicitudes completadas.</p>
+            </article>
+
+            <article class="donut-card">
+              <small>Activación profesional</small>
+              <div class="donut-chart" id="coordActivationDonut"><span>0%</span></div>
+              <p id="coordActivationText">Revisando pagos aprobados sobre profesionales activos.</p>
+            </article>
+
+            <article class="donut-card">
+              <small>Tasa de aceptación</small>
+              <div class="donut-chart" id="coordAcceptanceDonut"><span>0%</span></div>
+              <p id="coordAcceptanceText">Analizando si la demanda encuentra respuesta.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <div class="coordination-tables-grid">
+        <div class="coordination-panel glass-panel">
+          <div class="request-list-head">
+            <strong>Rubros con más movimiento</strong>
+            <span class="mini-note">prioridad comercial</span>
+          </div>
+          <div class="table-shell">
+            <table class="metric-table">
+              <thead>
+                <tr>
+                  <th>Rubro</th>
+                  <th>Solicitudes</th>
+                  <th>Ticket</th>
+                  <th>Cierre</th>
+                </tr>
+              </thead>
+              <tbody id="coordRubrosBody">
+                <tr>
+                  <td colspan="4">Cargando ranking...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="coordination-panel glass-panel">
+          <div class="request-list-head">
+            <strong>Profesionales destacados</strong>
+            <span class="mini-note">performance</span>
+          </div>
+          <div class="table-shell">
+            <table class="metric-table">
+              <thead>
+                <tr>
+                  <th>Profesional</th>
+                  <th>Rubros</th>
+                  <th>Completados</th>
+                  <th>Volumen</th>
+                </tr>
+              </thead>
+              <tbody id="coordProsBody">
+                <tr>
+                  <td colspan="4">Cargando performance...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="coordination-panel glass-panel">
+        <div class="request-list-head">
+          <strong>Gestión admin en vivo</strong>
+          <span class="mini-note" id="coordAdminModeHint">Inicia sesión como administrador para habilitar sanciones, verificaciones y aprobaciones.</span>
+        </div>
+        <div class="table-shell">
+          <table class="metric-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Pago</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="coordAdminUsersBody">
+              <tr>
+                <td colspan="5">Inicia sesión como administrador para gestionar usuarios reales.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mini-note" id="coordAdminFeedback">Desde aquí podrás suspender, reactivar, verificar identidad o aprobar altas profesionales.</p>
+      </div>
+
+      <div class="coordination-panel glass-panel">
+        <div class="request-list-head">
+          <strong>Movimiento reciente de la operación</strong>
+          <span class="mini-note">timeline viva</span>
+        </div>
+        <div class="coord-movement-list" id="coordMovementsList">
+          <div class="request-item">
+            <strong>Cargando movimiento</strong>
+            <small>Uniendo pagos, solicitudes y mensajería reciente...</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="coordination-panel glass-panel">
+        <div class="request-list-head">
+          <strong>Auditoría ejecutiva</strong>
+          <span class="mini-note">accesos y operaciones críticas</span>
+        </div>
+        <div class="coord-movement-list" id="coordAuditList">
+          <div class="request-item">
+            <strong>Cargando auditoría</strong>
+            <small>Registrando accesos, pagos, solicitudes y mensajería...</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chat-dashboard glass-panel" id="chat-solicitud">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Chat de coordinación</p>
+          <h2>Habla dentro de cada solicitud sin salir de la app</h2>
+        </div>
+        <span class="pill" id="chatState">Selecciona una solicitud</span>
+      </div>
+
+      <p class="section-text">
+        Cliente y profesional pueden coordinar detalles reales del trabajo desde este canal compartido.
+      </p>
+
+      <div class="chat-grid">
+        <div class="chat-column glass-panel">
+          <label class="form-field">
+            <span>Solicitud activa</span>
+            <select id="chatRequestSelect">
+              <option value="">Inicia sesión para habilitar el chat</option>
+            </select>
+          </label>
+
+          <p class="mini-note" id="chatInfoText">Elige una solicitud para ver la conversación entre cliente y profesional.</p>
+
+          <div class="chat-messages" id="chatMessagesList">
+            <div class="request-item">
+              <strong>Sin conversación activa</strong>
+              <small>Cuando selecciones una solicitud, los mensajes aparecerán aquí.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-column glass-panel">
+          <label class="form-field">
+            <span>Nuevo mensaje</span>
+            <textarea id="chatMessageInput" rows="6" placeholder="Escribe aquí para coordinar horario, ubicación o detalles del trabajo..."></textarea>
+          </label>
+
+          <div class="request-actions">
+            <button type="button" class="btn btn-primary" id="chatSendButton">Enviar mensaje</button>
+            <span class="mini-note" id="chatFeedback">El chat se activa cuando una solicitud queda seleccionada.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="live-section glass-panel" id="rubros">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Rubros conectados a la API</p>
+          <h2>Tu inicio ya representa el mundo del trabajo</h2>
+        </div>
+        <span class="pill" id="apiState">Conectando...</span>
+      </div>
+
+      <p class="section-text">
+        Esta portada toma datos reales del backend para mostrar rubros activos y dar sensación de producto vivo desde el primer segundo.
+      </p>
+
+      <div class="chip-cloud" id="rubrosContainer">
+        <span class="chip">Cargando rubros...</span>
+      </div>
+    </section>
+
+    <section class="workflow" id="flujo">
+      <article class="step glass-panel">
+        <span>01</span>
+        <h3>Elegí tu modo</h3>
+        <p>Cliente o profesional, con un inicio visual que te ubica rápido dentro de la plataforma.</p>
+      </article>
+
+      <article class="step glass-panel">
+        <span>02</span>
+        <h3>Publicá o encontrá</h3>
+        <p>Buscá servicios, ofertas y oportunidades con jerarquía visual clara y acciones directas.</p>
+      </article>
+
+      <article class="step glass-panel">
+        <span>03</span>
+        <h3>Gestioná todo</h3>
+        <p>Presupuestos, estados, progreso y reputación desde un tablero moderno, adaptable y legible.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="currentYear"></span> AppServicios · Diseño inicial UX/UI con identidad moderna y adaptable.</p>
+  </footer>
+
+  <div class="toast-host" id="notificationToastHost" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

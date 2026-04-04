@@ -1,0 +1,16 @@
+# .NET
+**/bin/
+**/obj/
+
+# Node / Capacitor
+node_modules/
+.env
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+
+# iOS build outputs
+ios/App/build/
+ios/DerivedData/

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AppServicios | Sin conexión</title>
+  <meta name="theme-color" content="#07111f" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: rgba(10, 18, 36, 0.92);
+      --text: #eef7ff;
+      --muted: #a9bad3;
+      --accent: #6ef2ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Inter, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #07111f 0%, #10213d 100%);
+      color: var(--text);
+      padding: 24px;
+    }
+    .panel {
+      width: min(560px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(110, 242, 255, 0.22);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(4, 9, 20, 0.45);
+    }
+    h1 { margin-top: 0; }
+    p { color: var(--muted); line-height: 1.6; }
+    a {
+      display: inline-block;
+      margin-top: 12px;
+      color: #03111c;
+      background: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>📴 Sin conexión por ahora</h1>
+    <p>AppServicios quedó instalada como experiencia web progresiva. Cuando vuelvas a tener internet, podrás seguir usando login, solicitudes, chat y notificaciones en tiempo real.</p>
+    <p>Si estás probando en Android, vuelve a abrir la app desde Chrome o desde el acceso directo instalado.</p>
+    <a href="/">Reintentar</a>
+  </main>
+</body>
+</html>

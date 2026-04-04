@@ -1,0 +1,148 @@
+using System.Text;
+using System.Text.Json.Serialization;
+using AppServicios.Api.Data;
+using AppServicios.Api.Domain;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container
+builder.Services.AddDbContext<AppServiciosDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+builder.Services.AddHttpClient();
+builder.Services.AddOpenApi();
+
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "AppServicios-Dev-Key-2026-Segura-Preview-32CharsMin";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AppServicios.Api";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AppServicios.Client";
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppServiciosDbContext>();
+    await EnsureDemoAdminAsync(db);
+}
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+app.MapFallbackToFile("index.html");
+
+// Health check
+app.MapGet("/health", () => new { status = "healthy" });
+
+var summaries = new[]
+{
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
+
+app.MapGet("/weatherforecast", () =>
+{
+    var forecast =  Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
+
+app.Run();
+
+static async Task EnsureDemoAdminAsync(AppServiciosDbContext db)
+{
+    const string adminEmail = "admin@appservicios.com";
+    const string adminPassword = "Admin123!";
+
+    var admin = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == adminEmail);
+    if (admin is null)
+    {
+        db.Usuarios.Add(new Usuario
+        {
+            Nombre = "Admin AppServicios",
+            Email = adminEmail,
+            Telefono = "1100000000",
+            DNI = "99999999",
+            FechaNacimiento = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            Rol = "Administrador",
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow,
+            PasswordHash = adminPassword,
+            VerificadoRenaper = true,
+            FechaVerificacion = DateTime.UtcNow,
+            RecibeNotificaciones = true
+        });
+    }
+    else
+    {
+        admin.Rol = "Administrador";
+        admin.Activo = true;
+        admin.PasswordHash = adminPassword;
+        admin.RecibeNotificaciones = true;
+    }
+
+    await db.SaveChangesAsync();
+}
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}

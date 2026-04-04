@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultado del pago · AppServicios</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: rgba(10, 18, 36, 0.85);
+      --text: #eef7ff;
+      --muted: #a9bad3;
+      --accent: #6ef2ff;
+      --accent2: #b86bff;
+      --border: rgba(126, 201, 255, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Inter, 'Segoe UI', sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #07111f 0%, #0d1830 100%);
+      padding: 1rem;
+    }
+    .card {
+      width: min(680px, 100%);
+      padding: 1.4rem;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 24px 60px rgba(4, 9, 20, 0.45);
+    }
+    .badge {
+      display: inline-flex;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #04111a;
+      font-weight: 800;
+      margin-bottom: 0.8rem;
+    }
+    h1 { margin: 0 0 0.5rem; }
+    p { color: var(--muted); line-height: 1.6; }
+    .summary {
+      margin-top: 1rem;
+      padding: 0.9rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+    a {
+      display: inline-flex;
+      margin-top: 1rem;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0.8rem 1rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #04111a;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge" id="badge">Mercado Pago</span>
+    <h1 id="title">Volviste de Mercado Pago</h1>
+    <p id="description">Puedes regresar a AppServicios y usar el botón <strong>Verificar pago MP</strong> para sincronizar el estado del cobro.</p>
+    <div class="summary" id="summary">Esperando datos del retorno...</div>
+    <a href="/">Volver a AppServicios</a>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const status = (params.get('status') || 'pending').toLowerCase();
+    const title = document.getElementById('title');
+    const description = document.getElementById('description');
+    const summary = document.getElementById('summary');
+
+    const messages = {
+      success: {
+        title: 'Pago aprobado o en retorno exitoso',
+        description: 'Regresa a la app principal y pulsa Verificar pago MP para confirmar el estado en tu cuenta.'
+      },
+      failure: {
+        title: 'El pago no se completó',
+        description: 'Puedes volver a la app, revisar el medio de pago y reintentar cuando quieras.'
+      },
+      pending: {
+        title: 'Pago pendiente de acreditación',
+        description: 'Mercado Pago indicó un estado pendiente. Vuelve a la app y verifica el estado actualizado.'
+      }
+    };
+
+    const current = messages[status] || messages.pending;
+    title.textContent = current.title;
+    description.textContent = current.description;
+    summary.textContent = `status=${status} · collection_id=${params.get('collection_id') || 'N/D'} · payment_id=${params.get('payment_id') || 'N/D'} · merchant_order_id=${params.get('merchant_order_id') || 'N/D'}`;
+  </script>
+</body>
+</html>
