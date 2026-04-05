@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+.git/
+.vscode/
+node_modules/
+android/
+ios/
+.env
+*.user
+*.suo
+*.cache
