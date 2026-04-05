@@ -10,6 +10,9 @@ node_modules/
 android/.gradle/
 android/build/
 android/app/build/
+android/keystore.properties
+android/*.jks
+android/*.keystore
 
 # iOS build outputs
 ios/App/build/

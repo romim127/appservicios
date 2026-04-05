@@ -9,6 +9,8 @@
     "android:add": "npx cap add android",
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",
+    "android:apk": "set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&& set PATH=%JAVA_HOME%\\bin;%PATH%&& cd android && gradlew.bat assembleRelease",
+    "android:aab": "set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&& set PATH=%JAVA_HOME%\\bin;%PATH%&& cd android && gradlew.bat bundleRelease",
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
     "ios:open": "npx cap open ios"

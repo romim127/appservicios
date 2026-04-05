@@ -5,12 +5,14 @@ using AppServicios.Api.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
+var defaultConnection = ResolveConnectionString(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<AppServiciosDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(defaultConnection));
 
 builder.Services.AddCors(options =>
 {
@@ -59,7 +61,17 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppServiciosDbContext>();
-    await EnsureDemoAdminAsync(db);
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+    try
+    {
+        await db.Database.MigrateAsync();
+        await EnsureDemoAdminAsync(db);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "No se pudo inicializar la base de datos al arrancar la app.");
+    }
 }
 
 // Configure the HTTP request pipeline
@@ -106,6 +118,50 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast");
 
 app.Run();
+
+static string ResolveConnectionString(IConfiguration configuration, IHostEnvironment environment)
+{
+    var configured = configuration.GetConnectionString("DefaultConnection");
+    var databaseUrl = configuration["DATABASE_URL"];
+
+    if (!string.IsNullOrWhiteSpace(databaseUrl)
+        && (string.IsNullOrWhiteSpace(configured) || (!environment.IsDevelopment() && IsLocalPostgresConnection(configured))))
+    {
+        return ConvertDatabaseUrlToNpgsql(databaseUrl);
+    }
+
+    return configured ?? "Host=localhost;Port=5432;Database=appservicios;Username=postgres;Password=postgres";
+}
+
+static bool IsLocalPostgresConnection(string connectionString)
+    => connectionString.Contains("Host=localhost", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
+static string ConvertDatabaseUrlToNpgsql(string databaseUrl)
+{
+    if (databaseUrl.Contains("Host=", StringComparison.OrdinalIgnoreCase))
+    {
+        return databaseUrl;
+    }
+
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':', 2, StringSplitOptions.TrimEntries);
+    var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty;
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+
+    var builder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Username = username,
+        Password = password,
+        Database = uri.AbsolutePath.Trim('/'),
+        SslMode = SslMode.Require,
+        TrustServerCertificate = true
+    };
+
+    return builder.ConnectionString;
+}
 
 static async Task EnsureDemoAdminAsync(AppServiciosDbContext db)
 {
