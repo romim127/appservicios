@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const publicUrl = process.env.APP_PUBLIC_URL?.trim() || 'https://REEMPLAZAR-POR-TU-HTTPS';
+const publicUrl = process.env.APP_PUBLIC_URL?.trim() || 'https://appservicios-mn6i.onrender.com';
 
 const config: CapacitorConfig = {
   appId: 'com.appservicios.app',
