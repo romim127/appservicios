@@ -497,6 +497,135 @@ body::selection {
   padding: 1.2rem;
 }
 
+.map-showcase {
+  margin-top: 1rem;
+  padding: 1.2rem;
+}
+
+.map-toolbar {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.map-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.map-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1rem;
+}
+
+.map-stage,
+.map-legend {
+  padding: 0.9rem;
+}
+
+.map-canvas {
+  width: 100%;
+  min-height: 420px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(110, 242, 255, 0.08), rgba(184, 107, 255, 0.06));
+}
+
+.map-legend {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.map-legend-head {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.map-legend-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.map-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.map-tag.pro {
+  background: rgba(110, 242, 255, 0.12);
+  border-color: rgba(110, 242, 255, 0.35);
+}
+
+.map-tag.client {
+  background: rgba(184, 107, 255, 0.12);
+  border-color: rgba(184, 107, 255, 0.35);
+}
+
+.map-tag.request {
+  background: rgba(158, 255, 138, 0.12);
+  border-color: rgba(158, 255, 138, 0.35);
+}
+
+.map-legend-list {
+  display: grid;
+  gap: 0.65rem;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.map-item {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  padding: 0.8rem 0.85rem;
+}
+
+.map-item strong,
+.map-item small {
+  display: block;
+}
+
+.map-item small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.leaflet-container {
+  font: inherit;
+  background: rgba(6, 16, 32, 0.12);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--panel-strong);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.leaflet-popup-content {
+  margin: 0.8rem 0.9rem;
+}
+
+.leaflet-popup-content small {
+  color: var(--muted);
+}
+
 .access-grid {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
@@ -1479,6 +1608,7 @@ body::selection {
   .workflow,
   .experience-grid,
   .access-grid,
+  .map-grid,
   .request-grid,
   .pro-grid,
   .chat-grid,
@@ -1529,5 +1659,15 @@ body::selection {
   .section-heading {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .map-toolbar,
+  .map-toolbar-actions {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .map-canvas {
+    min-height: 320px;
   }
 }

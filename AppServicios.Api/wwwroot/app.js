@@ -120,6 +120,11 @@ const coordActivationDonut = document.getElementById('coordActivationDonut');
 const coordActivationText = document.getElementById('coordActivationText');
 const coordAcceptanceDonut = document.getElementById('coordAcceptanceDonut');
 const coordAcceptanceText = document.getElementById('coordAcceptanceText');
+const mapStatus = document.getElementById('mapStatus');
+const mapSummary = document.getElementById('mapSummary');
+const mapLegendList = document.getElementById('mapLegendList');
+const mapAudienceFilter = document.getElementById('mapAudienceFilter');
+const mapRefreshButton = document.getElementById('mapRefreshButton');
 const coordRubrosBody = document.getElementById('coordRubrosBody');
 const coordProsBody = document.getElementById('coordProsBody');
 const coordMovementsList = document.getElementById('coordMovementsList');
@@ -153,6 +158,9 @@ let notificationPollTimer = 0;
 let coordinationPollTimer = 0;
 let cachedCoordinationDashboard = null;
 let notificationsInitialized = false;
+let serviceMap = null;
+let serviceMapLayer = null;
+const mapGeoCache = new Map();
 const shownNotificationIds = new Set();
 const shownCoordinationGoalKeys = new Set();
 const nativeFetch = window.fetch.bind(window);
@@ -186,6 +194,7 @@ window.fetch = (input, init = {}) => {
 };
 
 currentYear.textContent = new Date().getFullYear();
+hydrateMapGeoCache();
 
 function resolveTheme(theme) {
   if (theme === 'system') {
@@ -262,6 +271,22 @@ function setOfflineState() {
   if (requestFeedback) {
     requestFeedback.textContent = 'No se pudo conectar con la API.';
   }
+
+  if (mapStatus) {
+    mapStatus.textContent = 'Sin conexión';
+  }
+
+  if (mapSummary) {
+    mapSummary.textContent = 'No se pudieron cargar las ubicaciones del mapa.';
+  }
+
+  if (mapLegendList) {
+    mapLegendList.innerHTML = `
+      <div class="request-item">
+        <strong>Mapa fuera de línea</strong>
+        <small>No pudimos obtener las ubicaciones desde la API.</small>
+      </div>`;
+  }
 }
 
 function formatCurrency(value) {
@@ -331,6 +356,332 @@ async function extractApiError(response) {
   } catch {
     return `Error ${response.status}`;
   }
+}
+
+function hydrateMapGeoCache() {
+  try {
+    const raw = localStorage.getItem('appservicios-map-geocache');
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value && Number.isFinite(Number(value.lat)) && Number.isFinite(Number(value.lng))) {
+        mapGeoCache.set(key, { lat: Number(value.lat), lng: Number(value.lng) });
+      }
+    });
+  } catch {
+    // Se ignora caché corrupta o inaccesible.
+  }
+}
+
+function persistMapGeoCache() {
+  try {
+    const snapshot = {};
+    mapGeoCache.forEach((value, key) => {
+      if (value) {
+        snapshot[key] = value;
+      }
+    });
+    localStorage.setItem('appservicios-map-geocache', JSON.stringify(snapshot));
+  } catch {
+    // Puede fallar en modo privado o por cuota.
+  }
+}
+
+function isValidMapCoordinate(lat, lng) {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+
+  return Number.isFinite(parsedLat)
+    && Number.isFinite(parsedLng)
+    && Math.abs(parsedLat) > 0.001
+    && Math.abs(parsedLng) > 0.001
+    && parsedLat >= -90
+    && parsedLat <= 90
+    && parsedLng >= -180
+    && parsedLng <= 180;
+}
+
+function normalizeLocationForMap(location) {
+  const cleaned = String(location || '').trim();
+  if (!cleaned) return '';
+  return /argentina/i.test(cleaned) ? cleaned : `${cleaned}, Argentina`;
+}
+
+async function geocodeLocation(location) {
+  const query = normalizeLocationForMap(location);
+  if (!query) return null;
+
+  if (mapGeoCache.has(query)) {
+    return mapGeoCache.get(query);
+  }
+
+  try {
+    const endpoint = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ar&q=${encodeURIComponent(query)}`;
+    const response = await nativeFetch(endpoint, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'es-AR'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Geocoding ${response.status}`);
+    }
+
+    const results = await response.json();
+    const first = Array.isArray(results) ? results[0] : null;
+
+    if (!first) {
+      return null;
+    }
+
+    const coords = {
+      lat: Number(first.lat),
+      lng: Number(first.lon)
+    };
+
+    if (isValidMapCoordinate(coords.lat, coords.lng)) {
+      mapGeoCache.set(query, coords);
+      persistMapGeoCache();
+      return coords;
+    }
+  } catch (error) {
+    console.warn('No se pudo geocodificar la ubicación para el mapa.', error);
+  }
+
+  return null;
+}
+
+async function resolveCoordinatesForPayload(location, lat = 0, lng = 0) {
+  if (isValidMapCoordinate(lat, lng)) {
+    return { lat: Number(lat), lng: Number(lng), source: 'direct' };
+  }
+
+  const geocoded = await geocodeLocation(location);
+  if (geocoded && isValidMapCoordinate(geocoded.lat, geocoded.lng)) {
+    return { ...geocoded, source: 'geocoded' };
+  }
+
+  return { lat: 0, lng: 0, source: 'none' };
+}
+
+function getMapMarkerMeta(type) {
+  switch (type) {
+    case 'cliente':
+      return { color: '#b86bff', label: 'Cliente', emoji: '🙋' };
+    case 'solicitud':
+      return { color: '#9eff8a', label: 'Solicitud', emoji: '🧰' };
+    default:
+      return { color: '#6ef2ff', label: 'Profesional', emoji: '👷' };
+  }
+}
+
+function buildMapItems() {
+  const filter = mapAudienceFilter?.value || 'todos';
+  const items = [];
+
+  if (filter === 'todos' || filter === 'profesionales') {
+    cachedProfesionales.slice(0, 18).forEach((item) => {
+      items.push({
+        type: 'profesional',
+        id: Number(item.id || 0),
+        title: item.usuarioNombre || `Profesional #${item.id || '?'}`,
+        subtitle: Array.isArray(item.rubros) && item.rubros.length > 0
+          ? item.rubros.join(', ')
+          : 'Perfil profesional activo',
+        detail: `${formatCurrency(item.tarifaBase || 0)} · ${item.ubicacion || 'Sin ubicación'}`,
+        location: item.ubicacion || '',
+        latitud: Number(item.latitud || 0),
+        longitud: Number(item.longitud || 0)
+      });
+    });
+  }
+
+  if (filter === 'todos' || filter === 'clientes') {
+    cachedClientes.slice(0, 18).forEach((item) => {
+      items.push({
+        type: 'cliente',
+        id: Number(item.id || 0),
+        title: item.usuarioNombre || `Cliente #${item.id || '?'}`,
+        subtitle: item.preferencias || 'Cliente buscando atención rápida',
+        detail: item.ubicacion || 'Sin ubicación',
+        location: item.ubicacion || '',
+        latitud: Number(item.latitud || 0),
+        longitud: Number(item.longitud || 0)
+      });
+    });
+  }
+
+  if (filter === 'todos' || filter === 'solicitudes') {
+    cachedRequests.slice(0, 18).forEach((item) => {
+      items.push({
+        type: 'solicitud',
+        id: Number(item.id || 0),
+        title: formatRequestTitle(item),
+        subtitle: `${item.clienteNombre || 'Cliente'} · ${item.estado || 'Pendiente'}`,
+        detail: `${formatCurrency(item.presupuestoEstimado || 0)} · ${item.ubicacion || 'Sin ubicación'}`,
+        location: item.ubicacion || '',
+        latitud: Number(item.latitud || 0),
+        longitud: Number(item.longitud || 0)
+      });
+    });
+  }
+
+  return items.slice(0, 36);
+}
+
+function renderMapLegend(items) {
+  if (!mapLegendList) return;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    mapLegendList.innerHTML = `
+      <div class="request-item">
+        <strong>Sin ubicaciones listas</strong>
+        <small>Carga clientes, profesionales o solicitudes con ubicación para verlos aquí.</small>
+      </div>`;
+    return;
+  }
+
+  mapLegendList.innerHTML = '';
+  const visibleItems = items.slice(0, 12);
+
+  visibleItems.forEach((item) => {
+    const meta = getMapMarkerMeta(item.type);
+    const card = document.createElement('div');
+    card.className = 'map-item';
+    card.innerHTML = `
+      <strong>${meta.emoji} ${escapeHtml(item.title)}</strong>
+      <small>${escapeHtml(item.subtitle)}</small>
+      <small>${escapeHtml(item.detail)}</small>
+      <small>${item.source === 'geocoded' ? 'Ubicación aproximada por dirección cargada' : 'Ubicación registrada'}</small>`;
+    mapLegendList.appendChild(card);
+  });
+
+  if (items.length > visibleItems.length) {
+    const extra = document.createElement('small');
+    extra.className = 'mini-note';
+    extra.textContent = `Mostrando ${visibleItems.length} de ${items.length} puntos disponibles.`;
+    mapLegendList.appendChild(extra);
+  }
+}
+
+function ensureServiceMap() {
+  const mapElement = document.getElementById('serviceMap');
+  if (!mapElement || !window.L) {
+    return null;
+  }
+
+  if (!serviceMap) {
+    serviceMap = window.L.map(mapElement, {
+      scrollWheelZoom: false,
+      attributionControl: true
+    }).setView([-34.6037, -58.3816], 10);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(serviceMap);
+
+    serviceMapLayer = window.L.layerGroup().addTo(serviceMap);
+  }
+
+  return serviceMap;
+}
+
+async function renderServiceMap() {
+  if (!mapStatus) return;
+
+  const mapInstance = ensureServiceMap();
+  if (!mapInstance) {
+    mapStatus.textContent = 'Mapa no disponible';
+    if (mapSummary) {
+      mapSummary.textContent = 'No se pudo inicializar el mapa en este navegador.';
+    }
+    return;
+  }
+
+  const items = buildMapItems();
+  if (items.length === 0) {
+    if (serviceMapLayer) {
+      serviceMapLayer.clearLayers();
+    }
+    mapStatus.textContent = 'Sin datos';
+    if (mapSummary) {
+      mapSummary.textContent = 'Todavía no hay suficientes ubicaciones cargadas para mostrar.';
+    }
+    renderMapLegend([]);
+    return;
+  }
+
+  mapStatus.textContent = 'Ubicando puntos...';
+
+  const resolvedItems = [];
+  for (const item of items) {
+    const coords = await resolveCoordinatesForPayload(item.location, item.latitud, item.longitud);
+    if (isValidMapCoordinate(coords.lat, coords.lng)) {
+      resolvedItems.push({
+        ...item,
+        lat: coords.lat,
+        lng: coords.lng,
+        source: coords.source
+      });
+    }
+  }
+
+  if (serviceMapLayer) {
+    serviceMapLayer.clearLayers();
+  }
+
+  if (resolvedItems.length === 0) {
+    mapStatus.textContent = 'Sin coordenadas válidas';
+    if (mapSummary) {
+      mapSummary.textContent = 'Carga una ubicación más precisa para ver puntos reales en el mapa.';
+    }
+    renderMapLegend([]);
+    return;
+  }
+
+  const bounds = [];
+  resolvedItems.forEach((item) => {
+    const meta = getMapMarkerMeta(item.type);
+    const popupHtml = `
+      <strong>${escapeHtml(item.title)}</strong><br>
+      <small>${escapeHtml(item.subtitle)}</small><br>
+      <small>${escapeHtml(item.detail)}</small><br>
+      <small>${item.source === 'geocoded' ? 'Ubicación aproximada por dirección cargada' : 'Ubicación registrada en la app'}</small>`;
+
+    const marker = window.L.circleMarker([item.lat, item.lng], {
+      radius: 8,
+      color: meta.color,
+      weight: 2,
+      fillColor: meta.color,
+      fillOpacity: 0.8
+    });
+
+    marker.bindPopup(popupHtml);
+    marker.addTo(serviceMapLayer);
+    bounds.push([item.lat, item.lng]);
+  });
+
+  if (bounds.length === 1) {
+    mapInstance.setView(bounds[0], 12);
+  } else {
+    mapInstance.fitBounds(bounds, { padding: [24, 24] });
+  }
+
+  const counts = resolvedItems.reduce((acc, item) => {
+    acc[item.type] = (acc[item.type] || 0) + 1;
+    return acc;
+  }, { profesional: 0, cliente: 0, solicitud: 0 });
+
+  mapStatus.textContent = 'Mapa en vivo';
+  if (mapSummary) {
+    mapSummary.textContent = `${counts.profesional} profesionales · ${counts.cliente} clientes · ${counts.solicitud} solicitudes ubicadas`;
+  }
+
+  renderMapLegend(resolvedItems);
+  window.setTimeout(() => mapInstance.invalidateSize(), 120);
 }
 
 function getCurrentAccountRole() {
@@ -1145,10 +1496,12 @@ async function submitRegistration() {
       const existingProfessionalSession = await fetchSessionContext(ensuredUser.id);
       const existingProfessionalId = Number(existingProfessionalSession?.profesionalId || 0);
 
+      const professionalCoords = await resolveCoordinatesForPayload(data.ubicacion);
+
       const professionalPayload = {
         usuarioId: ensuredUser.id,
-        latitud: 0,
-        longitud: 0,
+        latitud: professionalCoords.lat,
+        longitud: professionalCoords.lng,
         ubicacion: data.ubicacion,
         'añosExperiencia': experienceYears,
         descripcion: description,
@@ -1199,10 +1552,12 @@ async function submitRegistration() {
 
       const createdUser = await userResponse.json();
 
+      const clientCoords = await resolveCoordinatesForPayload(data.ubicacion);
+
       const clientPayload = {
         usuarioId: createdUser.id,
-        latitud: 0,
-        longitud: 0,
+        latitud: clientCoords.lat,
+        longitud: clientCoords.lng,
         ubicacion: data.ubicacion,
         preferencias: clientPreferencesInput?.value.trim() || 'Atención clara y seguimiento rápido.',
         recibeNotificaciones: true
@@ -2474,6 +2829,7 @@ async function loadRequests() {
 
     renderRequestList(filteredRequests);
     fillChatRequestSelect();
+    renderServiceMap().catch((error) => console.error('No se pudo actualizar el mapa.', error));
 
     if (requestState && currentSession?.clienteId) {
       requestState.textContent = 'Sesión cliente activa';
@@ -2553,13 +2909,15 @@ async function publishRequest() {
     return;
   }
 
+  const requestCoords = await resolveCoordinatesForPayload(ubicacion);
+
   const payload = {
     usuarioOperadorId: Number(currentSession.usuarioId || 0),
     clienteId,
     profesionalId: null,
     servicioId,
-    latitud: 0,
-    longitud: 0,
+    latitud: requestCoords.lat,
+    longitud: requestCoords.lng,
     ubicacion,
     descripcion,
     fechaRequerida: new Date(`${fecha}T12:00:00`).toISOString(),
@@ -2776,6 +3134,20 @@ if (requestRefreshButton) {
     loadRequests().finally(() => {
       if (requestState) requestState.textContent = 'Listo para publicar';
     });
+  });
+}
+
+if (mapAudienceFilter) {
+  mapAudienceFilter.addEventListener('change', () => {
+    if (mapStatus) mapStatus.textContent = 'Actualizando mapa...';
+    renderServiceMap().catch((error) => console.error('No se pudo filtrar el mapa.', error));
+  });
+}
+
+if (mapRefreshButton) {
+  mapRefreshButton.addEventListener('click', () => {
+    if (mapStatus) mapStatus.textContent = 'Actualizando mapa...';
+    renderServiceMap().catch((error) => console.error('No se pudo refrescar el mapa.', error));
   });
 }
 
@@ -3006,6 +3378,7 @@ async function loadHomeData() {
     }
 
     await Promise.all([loadRequests(), loadProfessionalDashboard(), loadCoordinationDashboard()]);
+    renderServiceMap().catch((error) => console.error('No se pudo renderizar el mapa.', error));
     updatePreview();
   } catch (error) {
     console.error(error);

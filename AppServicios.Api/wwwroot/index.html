@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="AppServicios" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -31,6 +32,7 @@
     <nav class="nav-links" aria-label="Navegación principal">
       <a href="#paneles">Experiencia</a>
       <a href="#acceso">Acceso</a>
+      <a href="#mapa-vivo">Mapa</a>
       <a href="#dashboard-cliente">Dashboard</a>
       <a href="#dashboard-profesional">Panel Pro</a>
       <a href="#experiencia-app">Demo App</a>
@@ -565,6 +567,61 @@
       </div>
     </section>
 
+    <section class="map-showcase glass-panel" id="mapa-vivo">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Mapa en vivo</p>
+          <h2>Ubica clientes, profesionales y solicitudes sobre el mapa</h2>
+        </div>
+        <span class="pill" id="mapStatus">Preparando mapa...</span>
+      </div>
+
+      <p class="section-text">
+        Esta vista toma las ubicaciones cargadas en la plataforma y las proyecta en un mapa interactivo para detectar oferta, demanda y zonas activas.
+      </p>
+
+      <div class="map-toolbar">
+        <label class="form-field">
+          <span>Qué quieres ver</span>
+          <select id="mapAudienceFilter">
+            <option value="todos">Todos</option>
+            <option value="profesionales">Profesionales</option>
+            <option value="clientes">Clientes</option>
+            <option value="solicitudes">Solicitudes</option>
+          </select>
+        </label>
+
+        <div class="map-toolbar-actions">
+          <span class="mini-note" id="mapSummary">Cargando ubicaciones...</span>
+          <button type="button" class="btn btn-secondary btn-small" id="mapRefreshButton">Actualizar mapa</button>
+        </div>
+      </div>
+
+      <div class="map-grid">
+        <div class="map-stage glass-panel neon-border">
+          <div id="serviceMap" class="map-canvas" aria-label="Mapa en vivo de AppServicios"></div>
+        </div>
+
+        <aside class="map-legend glass-panel">
+          <div class="map-legend-head">
+            <strong>Ubicaciones visibles</strong>
+            <div class="map-legend-tags">
+              <span class="map-tag pro">Profesionales</span>
+              <span class="map-tag client">Clientes</span>
+              <span class="map-tag request">Solicitudes</span>
+            </div>
+          </div>
+
+          <div class="map-legend-list" id="mapLegendList">
+            <div class="request-item">
+              <strong>Sin marcadores todavía</strong>
+              <small>Cuando carguemos las ubicaciones aparecerán aquí.</small>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
     <section class="client-dashboard glass-panel" id="dashboard-cliente">
       <div class="section-heading">
         <div>
@@ -993,6 +1050,7 @@
 
   <div class="toast-host" id="notificationToastHost" aria-live="polite" aria-atomic="true"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="/app.js"></script>
 </body>
 </html>
