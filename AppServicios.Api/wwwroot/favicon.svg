@@ -230,25 +230,21 @@ stroke="url(#bridgeGrad)" stroke-width="3.5" stroke-linecap="round" opacity="0.7
 <ellipse cx="100" cy="101" rx="12" ry="8"
 fill="url(#bridgeGrad)" filter="url(#glow)"/>
 </g>
-<rect x="79" y="133" width="42" height="28" rx="4"
+<rect x="84" y="137" width="32" height="22" rx="4"
 fill="#F5A623" filter="url(#shadow)"/>
-<path d="M90,133 L90,128 Q90,124 95,124 L105,124 Q110,124 110,128 L110,133"
-fill="none" stroke="#F5A623" stroke-width="3.5"
+<path d="M92,137 L92,133 Q92,129 96,129 L104,129 Q108,129 108,133 L108,137"
+fill="none" stroke="#F5A623" stroke-width="3.2"
 stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="79" y1="147" x2="121" y2="147"
+<line x1="84" y1="148" x2="116" y2="148"
 stroke="#E08C00" stroke-width="2" opacity="0.6"/>
-<rect x="93" y="143" width="14" height="8" rx="2" fill="#E08C00"/>
-<rect x="72" y="107" width="56" height="16" rx="8"
-fill="#0A1828" stroke="#81C784" stroke-width="1.5" opacity="0.95"/>
-<text x="80" y="119"
+<rect x="95" y="144" width="10" height="7" rx="2" fill="#E08C00"/>
+<rect x="66" y="107" width="68" height="16" rx="8"
+fill="#0A1828" stroke="#4FC3F7" stroke-width="1.5" opacity="0.95"/>
+<text x="100" y="118.5"
 font-family="'Courier New', monospace"
-font-size="8.5" fill="#FFFFFF"
-text-anchor="start" font-weight="700"
-letter-spacing="1.2">work</text>
-<polyline points="106,116 109,119 116,111"
-fill="none" stroke="#81C784" stroke-width="2.2"
-stroke-linecap="round" stroke-linejoin="round"
-filter="url(#glow)"/>
+font-size="8.2" fill="#FFFFFF"
+text-anchor="middle" font-weight="700"
+letter-spacing="1.1">HECHO</text>
 <circle cx="100" cy="34" r="2.5" fill="#F5A623" opacity="0.9"/>
 <circle cx="112" cy="40" r="1.6" fill="#F5A623" opacity="0.5"/>
 <circle cx="88" cy="40" r="1.6" fill="#F5A623" opacity="0.5"/>

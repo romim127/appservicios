@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="AppServicios icon 192">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Logo AppServicios propuesta de prueba">
 <defs>
 <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
 <stop offset="0%" style="stop-color:#1A2E4A"/>
@@ -48,10 +48,6 @@
 </filter>
 <filter id="routeGlow" x="-20%" y="-80%" width="140%" height="260%">
 <feGaussianBlur stdDeviation="4" result="b"/>
-<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-</filter>
-<filter id="mapGlow" x="-10%" y="-10%" width="120%" height="120%">
-<feGaussianBlur stdDeviation="1.5" result="b"/>
 <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
 </filter>
 <clipPath id="circleClip">
