@@ -581,21 +581,37 @@
       </p>
 
       <div class="map-toolbar">
-        <label class="form-field">
-          <span>Qué quieres ver</span>
-          <select id="mapAudienceFilter">
-            <option value="todos">Todos</option>
-            <option value="profesionales">Profesionales</option>
-            <option value="clientes">Clientes</option>
-            <option value="solicitudes">Solicitudes</option>
-          </select>
-        </label>
+        <div class="map-toolbar-group">
+          <label class="form-field">
+            <span>Qué quieres ver</span>
+            <select id="mapAudienceFilter">
+              <option value="todos">Todos</option>
+              <option value="profesionales">Profesionales</option>
+              <option value="clientes">Clientes</option>
+              <option value="solicitudes">Solicitudes</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Radio de cercanía</span>
+            <select id="mapRadiusFilter">
+              <option value="0">Sin límite</option>
+              <option value="5">Hasta 5 km</option>
+              <option value="15">Hasta 15 km</option>
+              <option value="30">Hasta 30 km</option>
+              <option value="60">Hasta 60 km</option>
+            </select>
+          </label>
+        </div>
 
         <div class="map-toolbar-actions">
           <span class="mini-note" id="mapSummary">Cargando ubicaciones...</span>
+          <button type="button" class="btn btn-secondary btn-small" id="useCurrentLocationButton">Usar mi ubicación actual</button>
           <button type="button" class="btn btn-secondary btn-small" id="mapRefreshButton">Actualizar mapa</button>
         </div>
       </div>
+
+      <p class="mini-note map-distance-note" id="mapDistanceHint">Activa tu ubicación para ordenar perfiles y solicitudes por cercanía real.</p>
 
       <div class="map-grid">
         <div class="map-stage glass-panel neon-border">

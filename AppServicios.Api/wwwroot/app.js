@@ -124,6 +124,9 @@ const mapStatus = document.getElementById('mapStatus');
 const mapSummary = document.getElementById('mapSummary');
 const mapLegendList = document.getElementById('mapLegendList');
 const mapAudienceFilter = document.getElementById('mapAudienceFilter');
+const mapRadiusFilter = document.getElementById('mapRadiusFilter');
+const mapDistanceHint = document.getElementById('mapDistanceHint');
+const useCurrentLocationButton = document.getElementById('useCurrentLocationButton');
 const mapRefreshButton = document.getElementById('mapRefreshButton');
 const coordRubrosBody = document.getElementById('coordRubrosBody');
 const coordProsBody = document.getElementById('coordProsBody');
@@ -160,6 +163,7 @@ let cachedCoordinationDashboard = null;
 let notificationsInitialized = false;
 let serviceMap = null;
 let serviceMapLayer = null;
+let currentDeviceLocation = null;
 const mapGeoCache = new Map();
 const shownNotificationIds = new Set();
 const shownCoordinationGoalKeys = new Set();
@@ -408,6 +412,149 @@ function normalizeLocationForMap(location) {
   return /argentina/i.test(cleaned) ? cleaned : `${cleaned}, Argentina`;
 }
 
+function formatDistanceKm(distanceKm) {
+  const value = Number(distanceKm);
+  if (!Number.isFinite(value)) return 'distancia no disponible';
+  if (value < 1) return `${Math.round(value * 1000)} m`;
+  return `${value.toFixed(value < 10 ? 1 : 0)} km`;
+}
+
+function calculateDistanceKm(lat1, lng1, lat2, lng2) {
+  if (!isValidMapCoordinate(lat1, lng1) || !isValidMapCoordinate(lat2, lng2)) {
+    return Number.NaN;
+  }
+
+  const toRad = (value) => (Number(value) * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(Number(lat2) - Number(lat1));
+  const dLng = toRad(Number(lng2) - Number(lng1));
+  const originLat = toRad(lat1);
+  const targetLat = toRad(lat2);
+
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(originLat) * Math.cos(targetLat) * Math.sin(dLng / 2) ** 2;
+
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+async function reverseGeocodeCoordinates(lat, lng) {
+  try {
+    const endpoint = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+    const response = await nativeFetch(endpoint, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'es-AR'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Reverse geocoding ${response.status}`);
+    }
+
+    const result = await response.json();
+    const address = result?.address || {};
+    const shortLabel = [
+      address.suburb || address.neighbourhood || address.city_district,
+      address.city || address.town || address.village || address.state
+    ].filter(Boolean).join(', ') || result?.display_name || `Lat ${Number(lat).toFixed(4)}, Lon ${Number(lng).toFixed(4)}`;
+
+    mapGeoCache.set(normalizeLocationForMap(shortLabel), { lat: Number(lat), lng: Number(lng) });
+    persistMapGeoCache();
+
+    return {
+      shortLabel,
+      fullLabel: result?.display_name || shortLabel
+    };
+  } catch (error) {
+    console.warn('No se pudo resolver el nombre de la ubicación actual.', error);
+    return {
+      shortLabel: `Lat ${Number(lat).toFixed(4)}, Lon ${Number(lng).toFixed(4)}`,
+      fullLabel: 'Tu ubicación actual'
+    };
+  }
+}
+
+function applyCurrentLocationToInputs(label) {
+  const safeLabel = String(label || 'Tu ubicación actual').trim();
+
+  if (requestLocationInput) {
+    const currentValue = requestLocationInput.value.trim();
+    if (!currentValue || /buenos aires/i.test(currentValue)) {
+      requestLocationInput.value = safeLabel;
+    }
+  }
+
+  if (registerLocationInput) {
+    const currentValue = registerLocationInput.value.trim();
+    if (!currentValue || /caba|buenos aires/i.test(currentValue)) {
+      registerLocationInput.value = safeLabel;
+      registerLocationInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+}
+
+async function requestCurrentLocationForMap() {
+  if (!('geolocation' in navigator)) {
+    throw new Error('Este dispositivo no soporta ubicación automática.');
+  }
+
+  const originalButtonText = useCurrentLocationButton?.textContent || 'Usar mi ubicación actual';
+  if (useCurrentLocationButton) {
+    useCurrentLocationButton.disabled = true;
+    useCurrentLocationButton.classList.add('is-disabled');
+    useCurrentLocationButton.textContent = 'Ubicando...';
+  }
+
+  if (mapStatus) {
+    mapStatus.textContent = 'Buscando tu ubicación...';
+  }
+
+  try {
+    const position = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      });
+    });
+
+    const lat = Number(position.coords.latitude);
+    const lng = Number(position.coords.longitude);
+    const reverse = await reverseGeocodeCoordinates(lat, lng);
+
+    currentDeviceLocation = {
+      lat,
+      lng,
+      label: reverse.shortLabel,
+      fullLabel: reverse.fullLabel
+    };
+
+    applyCurrentLocationToInputs(reverse.shortLabel);
+
+    if (mapDistanceHint) {
+      mapDistanceHint.textContent = `Ubicación actual detectada: ${reverse.shortLabel}. Ahora puedes ordenar y filtrar por cercanía.`;
+    }
+
+    await renderServiceMap();
+  } catch (error) {
+    if (mapStatus) {
+      mapStatus.textContent = 'Ubicación no disponible';
+    }
+
+    if (mapDistanceHint) {
+      mapDistanceHint.textContent = 'No pudimos obtener tu ubicación actual. Revisa los permisos del navegador o del teléfono.';
+    }
+
+    throw error;
+  } finally {
+    if (useCurrentLocationButton) {
+      useCurrentLocationButton.disabled = false;
+      useCurrentLocationButton.classList.remove('is-disabled');
+      useCurrentLocationButton.textContent = originalButtonText;
+    }
+  }
+}
+
 async function geocodeLocation(location) {
   const query = normalizeLocationForMap(location);
   if (!query) return null;
@@ -548,12 +695,17 @@ function renderMapLegend(items) {
 
   visibleItems.forEach((item) => {
     const meta = getMapMarkerMeta(item.type);
+    const distanceLine = Number.isFinite(item.distanceKm)
+      ? `<small>A ${formatDistanceKm(item.distanceKm)} de tu ubicación</small>`
+      : '';
+
     const card = document.createElement('div');
     card.className = 'map-item';
     card.innerHTML = `
       <strong>${meta.emoji} ${escapeHtml(item.title)}</strong>
       <small>${escapeHtml(item.subtitle)}</small>
       <small>${escapeHtml(item.detail)}</small>
+      ${distanceLine}
       <small>${item.source === 'geocoded' ? 'Ubicación aproximada por dirección cargada' : 'Ubicación registrada'}</small>`;
     mapLegendList.appendChild(card);
   });
@@ -601,6 +753,7 @@ async function renderServiceMap() {
     return;
   }
 
+  const radiusKm = Number(mapRadiusFilter?.value || 0);
   const items = buildMapItems();
   if (items.length === 0) {
     if (serviceMapLayer) {
@@ -620,35 +773,91 @@ async function renderServiceMap() {
   for (const item of items) {
     const coords = await resolveCoordinatesForPayload(item.location, item.latitud, item.longitud);
     if (isValidMapCoordinate(coords.lat, coords.lng)) {
+      const distanceKm = currentDeviceLocation
+        ? calculateDistanceKm(currentDeviceLocation.lat, currentDeviceLocation.lng, coords.lat, coords.lng)
+        : Number.NaN;
+
       resolvedItems.push({
         ...item,
         lat: coords.lat,
         lng: coords.lng,
-        source: coords.source
+        source: coords.source,
+        distanceKm
       });
     }
+  }
+
+  let visibleItems = [...resolvedItems];
+
+  if (currentDeviceLocation) {
+    visibleItems.sort((left, right) => {
+      const leftDistance = Number.isFinite(left.distanceKm) ? left.distanceKm : Number.MAX_SAFE_INTEGER;
+      const rightDistance = Number.isFinite(right.distanceKm) ? right.distanceKm : Number.MAX_SAFE_INTEGER;
+      return leftDistance - rightDistance;
+    });
+  }
+
+  if (radiusKm > 0 && currentDeviceLocation) {
+    visibleItems = visibleItems.filter((item) => Number.isFinite(item.distanceKm) && item.distanceKm <= radiusKm);
   }
 
   if (serviceMapLayer) {
     serviceMapLayer.clearLayers();
   }
 
-  if (resolvedItems.length === 0) {
-    mapStatus.textContent = 'Sin coordenadas válidas';
+  const bounds = [];
+
+  if (currentDeviceLocation) {
+    const userMarker = window.L.circleMarker([currentDeviceLocation.lat, currentDeviceLocation.lng], {
+      radius: 10,
+      color: '#f59e0b',
+      weight: 2,
+      fillColor: '#fbbf24',
+      fillOpacity: 0.95
+    });
+
+    userMarker.bindPopup(`
+      <strong>Tu ubicación actual</strong><br>
+      <small>${escapeHtml(currentDeviceLocation.label || 'Ubicación detectada')}</small>`);
+    userMarker.addTo(serviceMapLayer);
+    bounds.push([currentDeviceLocation.lat, currentDeviceLocation.lng]);
+  }
+
+  if (visibleItems.length === 0) {
+    mapStatus.textContent = radiusKm > 0 ? 'Sin resultados cercanos' : 'Sin coordenadas válidas';
+
     if (mapSummary) {
-      mapSummary.textContent = 'Carga una ubicación más precisa para ver puntos reales en el mapa.';
+      mapSummary.textContent = radiusKm > 0 && currentDeviceLocation
+        ? `No encontramos puntos dentro de ${radiusKm} km de tu ubicación actual.`
+        : 'Carga una ubicación más precisa para ver puntos reales en el mapa.';
     }
+
+    if (mapDistanceHint) {
+      mapDistanceHint.textContent = radiusKm > 0 && !currentDeviceLocation
+        ? 'Para aplicar cercanía real primero debes activar tu ubicación actual.'
+        : (mapDistanceHint.textContent || 'Activa tu ubicación para ordenar perfiles y solicitudes por cercanía real.');
+    }
+
     renderMapLegend([]);
+
+    if (bounds.length === 1) {
+      mapInstance.setView(bounds[0], 12);
+    }
+
+    window.setTimeout(() => mapInstance.invalidateSize(), 120);
     return;
   }
 
-  const bounds = [];
-  resolvedItems.forEach((item) => {
+  visibleItems.forEach((item) => {
     const meta = getMapMarkerMeta(item.type);
+    const distanceLine = Number.isFinite(item.distanceKm)
+      ? `<br><small>A ${formatDistanceKm(item.distanceKm)} de tu ubicación</small>`
+      : '';
+
     const popupHtml = `
       <strong>${escapeHtml(item.title)}</strong><br>
       <small>${escapeHtml(item.subtitle)}</small><br>
-      <small>${escapeHtml(item.detail)}</small><br>
+      <small>${escapeHtml(item.detail)}</small>${distanceLine}<br>
       <small>${item.source === 'geocoded' ? 'Ubicación aproximada por dirección cargada' : 'Ubicación registrada en la app'}</small>`;
 
     const marker = window.L.circleMarker([item.lat, item.lng], {
@@ -670,17 +879,29 @@ async function renderServiceMap() {
     mapInstance.fitBounds(bounds, { padding: [24, 24] });
   }
 
-  const counts = resolvedItems.reduce((acc, item) => {
+  const counts = visibleItems.reduce((acc, item) => {
     acc[item.type] = (acc[item.type] || 0) + 1;
     return acc;
   }, { profesional: 0, cliente: 0, solicitud: 0 });
 
-  mapStatus.textContent = 'Mapa en vivo';
+  mapStatus.textContent = currentDeviceLocation ? 'Mapa por cercanía' : 'Mapa en vivo';
   if (mapSummary) {
-    mapSummary.textContent = `${counts.profesional} profesionales · ${counts.cliente} clientes · ${counts.solicitud} solicitudes ubicadas`;
+    const nearestLine = currentDeviceLocation && Number.isFinite(visibleItems[0]?.distanceKm)
+      ? ` · más cercano a ${formatDistanceKm(visibleItems[0].distanceKm)}`
+      : '';
+
+    mapSummary.textContent = `${counts.profesional} profesionales · ${counts.cliente} clientes · ${counts.solicitud} solicitudes ubicadas${nearestLine}`;
   }
 
-  renderMapLegend(resolvedItems);
+  if (mapDistanceHint) {
+    if (currentDeviceLocation) {
+      mapDistanceHint.textContent = `Tu ubicación actual está centrada en el mapa${radiusKm > 0 ? ` y el filtro quedó aplicado hasta ${radiusKm} km.` : '.'}`;
+    } else if (radiusKm > 0) {
+      mapDistanceHint.textContent = 'Seleccionaste un radio, pero necesitas activar tu ubicación actual para filtrar por cercanía.';
+    }
+  }
+
+  renderMapLegend(visibleItems);
   window.setTimeout(() => mapInstance.invalidateSize(), 120);
 }
 
@@ -3137,10 +3358,20 @@ if (requestRefreshButton) {
   });
 }
 
-if (mapAudienceFilter) {
-  mapAudienceFilter.addEventListener('change', () => {
+[mapAudienceFilter, mapRadiusFilter].forEach((element) => {
+  if (!element) return;
+
+  element.addEventListener('change', () => {
     if (mapStatus) mapStatus.textContent = 'Actualizando mapa...';
     renderServiceMap().catch((error) => console.error('No se pudo filtrar el mapa.', error));
+  });
+});
+
+if (useCurrentLocationButton) {
+  useCurrentLocationButton.addEventListener('click', () => {
+    requestCurrentLocationForMap().catch((error) => {
+      console.error('No se pudo activar la ubicación actual.', error);
+    });
   });
 }
 

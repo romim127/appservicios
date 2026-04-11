@@ -511,6 +511,13 @@ body::selection {
   flex-wrap: wrap;
 }
 
+.map-toolbar-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  flex: 1 1 460px;
+}
+
 .map-toolbar-actions {
   display: flex;
   align-items: center;
@@ -604,6 +611,10 @@ body::selection {
 .map-item small {
   color: var(--muted);
   line-height: 1.45;
+}
+
+.map-distance-note {
+  margin-top: 0.75rem;
 }
 
 .leaflet-container {
@@ -1665,6 +1676,11 @@ body::selection {
   .map-toolbar-actions {
     align-items: flex-start;
     justify-content: flex-start;
+  }
+
+  .map-toolbar-group {
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .map-canvas {
