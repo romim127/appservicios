@@ -1043,6 +1043,7 @@ async function renderServiceMap() {
       <strong>Tu ubicación actual</strong><br>
       <small>${escapeHtml(currentDeviceLocation.label || 'Ubicación detectada')}</small>`);
     userMarker.addTo(serviceMapLayer);
+    userMarker.openPopup();
     bounds.push([currentDeviceLocation.lat, currentDeviceLocation.lng]);
   }
 
@@ -1099,7 +1100,31 @@ async function renderServiceMap() {
     bounds.push([item.lat, item.lng]);
   });
 
-  if (bounds.length === 1) {
+  const nearestDistanceKm = Number.isFinite(visibleItems[0]?.distanceKm)
+    ? Number(visibleItems[0].distanceKm)
+    : Number.NaN;
+
+  if (currentDeviceLocation) {
+    const viewportRadiusKm = radiusKm > 0 ? radiusKm : 25;
+    const focusItems = visibleItems
+      .filter((item) => Number.isFinite(item.distanceKm) && item.distanceKm <= viewportRadiusKm)
+      .slice(0, 8);
+
+    if (focusItems.length === 0 && Number.isFinite(nearestDistanceKm) && nearestDistanceKm <= 120) {
+      focusItems.push(visibleItems[0]);
+    }
+
+    const focusBounds = [
+      [currentDeviceLocation.lat, currentDeviceLocation.lng],
+      ...focusItems.map((item) => [item.lat, item.lng])
+    ];
+
+    if (focusBounds.length === 1) {
+      mapInstance.setView(focusBounds[0], 13);
+    } else {
+      mapInstance.fitBounds(focusBounds, { padding: [24, 24], maxZoom: 13 });
+    }
+  } else if (bounds.length === 1) {
     mapInstance.setView(bounds[0], 12);
   } else {
     mapInstance.fitBounds(bounds, { padding: [24, 24] });
