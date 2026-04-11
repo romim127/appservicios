@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appservicios-shell-v1';
+const CACHE_NAME = 'appservicios-shell-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -10,6 +10,14 @@ const APP_SHELL = [
   '/manifest.webmanifest',
   '/offline.html'
 ];
+
+const NETWORK_FIRST_ASSETS = new Set([
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/manifest.webmanifest'
+]);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -53,7 +61,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate' || NETWORK_FIRST_ASSETS.has(url.pathname)) {
     event.respondWith(
       fetch(request)
         .then((response) => {

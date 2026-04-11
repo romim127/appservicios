@@ -501,11 +501,57 @@ function applyCurrentLocationToInputs(label) {
   }
 }
 
-async function requestCurrentLocationForMap() {
+async function getCurrentMapPosition() {
+  const capacitorBridge = window.Capacitor;
+  const capacitorGeolocation = capacitorBridge?.Plugins?.Geolocation;
+  const isNativePlatform = typeof capacitorBridge?.isNativePlatform === 'function' && capacitorBridge.isNativePlatform();
+
+  if (isNativePlatform && capacitorGeolocation) {
+    const currentPermissions = await capacitorGeolocation.checkPermissions().catch(() => null);
+    const isGranted = currentPermissions?.location === 'granted' || currentPermissions?.coarseLocation === 'granted';
+
+    if (!isGranted) {
+      const requestedPermissions = await capacitorGeolocation.requestPermissions();
+      const requestedGranted = requestedPermissions?.location === 'granted' || requestedPermissions?.coarseLocation === 'granted';
+
+      if (!requestedGranted) {
+        throw new Error('La app no tiene permiso de ubicación en Android.');
+      }
+    }
+
+    const position = await capacitorGeolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+
+    return {
+      lat: Number(position.coords.latitude),
+      lng: Number(position.coords.longitude),
+      source: 'capacitor'
+    };
+  }
+
   if (!('geolocation' in navigator)) {
     throw new Error('Este dispositivo no soporta ubicación automática.');
   }
 
+  const position = await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+  });
+
+  return {
+    lat: Number(position.coords.latitude),
+    lng: Number(position.coords.longitude),
+    source: 'browser'
+  };
+}
+
+async function requestCurrentLocationForMap() {
   const originalButtonText = useCurrentLocationButton?.textContent || 'Usar mi ubicación actual';
   if (useCurrentLocationButton) {
     useCurrentLocationButton.disabled = true;
@@ -518,33 +564,35 @@ async function requestCurrentLocationForMap() {
   }
 
   try {
-    const position = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 60000
-      });
-    });
-
-    const lat = Number(position.coords.latitude);
-    const lng = Number(position.coords.longitude);
+    const position = await getCurrentMapPosition();
+    const lat = Number(position.lat);
+    const lng = Number(position.lng);
     const reverse = await reverseGeocodeCoordinates(lat, lng);
 
     currentDeviceLocation = {
       lat,
       lng,
       label: reverse.shortLabel,
-      fullLabel: reverse.fullLabel
+      fullLabel: reverse.fullLabel,
+      source: position.source
     };
 
     applyCurrentLocationToInputs(reverse.shortLabel);
 
+    const mapInstance = ensureServiceMap();
+    if (mapInstance) {
+      mapInstance.setView([lat, lng], 13);
+    }
+
     if (mapDistanceHint) {
-      mapDistanceHint.textContent = `Ubicación actual detectada: ${reverse.shortLabel}. Ahora puedes ordenar y filtrar por cercanía.`;
+      const sourceLabel = position.source === 'capacitor' ? 'GPS del dispositivo' : 'navegador';
+      mapDistanceHint.textContent = `Ubicación actual detectada: ${reverse.shortLabel} (${sourceLabel}). Ahora puedes ordenar y filtrar por cercanía.`;
     }
 
     await renderServiceMap();
   } catch (error) {
+    currentDeviceLocation = null;
+
     if (mapStatus) {
       mapStatus.textContent = 'Ubicación no disponible';
     }
@@ -3391,9 +3439,11 @@ async function promptInstallApp() {
 function registerPwaFeatures() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js').catch((error) => {
-        console.error('No se pudo registrar el service worker.', error);
-      });
+      navigator.serviceWorker.register('/service-worker.js')
+        .then((registration) => registration.update())
+        .catch((error) => {
+          console.error('No se pudo registrar el service worker.', error);
+        });
     });
   }
 
