@@ -127,6 +127,11 @@ const mapAudienceFilter = document.getElementById('mapAudienceFilter');
 const mapRadiusFilter = document.getElementById('mapRadiusFilter');
 const mapDistanceHint = document.getElementById('mapDistanceHint');
 const useCurrentLocationButton = document.getElementById('useCurrentLocationButton');
+const routeStatus = document.getElementById('routeStatus');
+const routeSummary = document.getElementById('routeSummary');
+const routeNearestButton = document.getElementById('routeNearestButton');
+const openGoogleMapsRouteButton = document.getElementById('openGoogleMapsRouteButton');
+const openWazeRouteButton = document.getElementById('openWazeRouteButton');
 const mapRefreshButton = document.getElementById('mapRefreshButton');
 const coordRubrosBody = document.getElementById('coordRubrosBody');
 const coordProsBody = document.getElementById('coordProsBody');
@@ -163,7 +168,10 @@ let cachedCoordinationDashboard = null;
 let notificationsInitialized = false;
 let serviceMap = null;
 let serviceMapLayer = null;
+let serviceRouteLayer = null;
 let currentDeviceLocation = null;
+let currentVisibleMapItems = [];
+let selectedRouteItem = null;
 const mapGeoCache = new Map();
 const shownNotificationIds = new Set();
 const shownCoordinationGoalKeys = new Set();
@@ -678,6 +686,168 @@ function buildMapItems() {
   return items.slice(0, 36);
 }
 
+function setRouteLinkState(anchor, enabled, href = '#') {
+  if (!anchor) return;
+
+  anchor.href = enabled ? href : '#';
+  anchor.classList.toggle('is-disabled', !enabled);
+  anchor.classList.toggle('payment-link-disabled', !enabled);
+  anchor.setAttribute('aria-disabled', String(!enabled));
+}
+
+function syncRouteActions(target) {
+  const hasUsableTarget = !!(currentDeviceLocation && target && isValidMapCoordinate(target.lat, target.lng));
+
+  if (routeNearestButton) {
+    routeNearestButton.disabled = !hasUsableTarget;
+    routeNearestButton.classList.toggle('is-disabled', !hasUsableTarget);
+  }
+
+  const googleHref = hasUsableTarget
+    ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(`${currentDeviceLocation.lat},${currentDeviceLocation.lng}`)}&destination=${encodeURIComponent(`${target.lat},${target.lng}`)}&travelmode=driving`
+    : '#';
+
+  const wazeHref = hasUsableTarget
+    ? `https://waze.com/ul?ll=${encodeURIComponent(`${target.lat},${target.lng}`)}&navigate=yes`
+    : '#';
+
+  setRouteLinkState(openGoogleMapsRouteButton, hasUsableTarget, googleHref);
+  setRouteLinkState(openWazeRouteButton, hasUsableTarget, wazeHref);
+}
+
+function renderRouteSummary(target, routeData = null) {
+  if (!routeSummary) return;
+
+  if (!currentDeviceLocation) {
+    routeSummary.innerHTML = `
+      <div class="request-item">
+        <strong>Ubicación actual pendiente</strong>
+        <small>Activa tu ubicación para calcular distancia, tiempo estimado y abrir la navegación.</small>
+      </div>`;
+    if (routeStatus) {
+      routeStatus.textContent = 'Necesita tu ubicación';
+    }
+    syncRouteActions(null);
+    return;
+  }
+
+  if (!target) {
+    routeSummary.innerHTML = `
+      <div class="request-item">
+        <strong>Sin destino cercano</strong>
+        <small>No hay puntos visibles dentro del filtro actual para trazar una ruta.</small>
+      </div>`;
+    if (routeStatus) {
+      routeStatus.textContent = 'Sin destino';
+    }
+    syncRouteActions(null);
+    return;
+  }
+
+  const directDistance = Number.isFinite(target.distanceKm)
+    ? formatDistanceKm(target.distanceKm)
+    : 'distancia no disponible';
+  const routeDistance = Number.isFinite(routeData?.distanceKm)
+    ? formatDistanceKm(routeData.distanceKm)
+    : directDistance;
+  const eta = Number.isFinite(routeData?.durationMin)
+    ? `${Math.max(1, Math.round(routeData.durationMin))} min aprox.`
+    : 'ETA pendiente';
+
+  routeSummary.innerHTML = `
+    <div class="request-item">
+      <strong>${escapeHtml(target.title)}</strong>
+      <small>${escapeHtml(target.subtitle)}</small>
+      <small>${escapeHtml(target.detail)}</small>
+      <small>Distancia: ${routeDistance}</small>
+      <small>Tiempo estimado: ${eta}</small>
+    </div>`;
+
+  if (routeStatus) {
+    routeStatus.textContent = routeData ? 'Ruta calculada' : 'Destino listo';
+  }
+
+  syncRouteActions(target);
+}
+
+async function fetchRouteData(origin, target) {
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${target.lng},${target.lat}?overview=full&geometries=geojson`;
+
+  try {
+    const response = await nativeFetch(osrmUrl, {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Routing ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const route = Array.isArray(payload?.routes) ? payload.routes[0] : null;
+
+    if (!route?.geometry?.coordinates?.length) {
+      throw new Error('Ruta vacía');
+    }
+
+    return {
+      coordinates: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+      distanceKm: Number(route.distance || 0) / 1000,
+      durationMin: Number(route.duration || 0) / 60,
+      source: 'osrm'
+    };
+  } catch (error) {
+    console.warn('No se pudo calcular la ruta real, se usará una línea directa.', error);
+    return {
+      coordinates: [[origin.lat, origin.lng], [target.lat, target.lng]],
+      distanceKm: calculateDistanceKm(origin.lat, origin.lng, target.lat, target.lng),
+      durationMin: calculateDistanceKm(origin.lat, origin.lng, target.lat, target.lng) / 35 * 60,
+      source: 'fallback'
+    };
+  }
+}
+
+async function previewRouteToItem(target) {
+  if (!currentDeviceLocation || !target) {
+    renderRouteSummary(target, null);
+    return;
+  }
+
+  const mapInstance = ensureServiceMap();
+  if (!mapInstance) return;
+
+  if (!serviceRouteLayer) {
+    serviceRouteLayer = window.L.layerGroup().addTo(mapInstance);
+  }
+
+  serviceRouteLayer.clearLayers();
+  selectedRouteItem = target;
+
+  if (routeStatus) {
+    routeStatus.textContent = 'Calculando ruta...';
+  }
+
+  const routeData = await fetchRouteData(currentDeviceLocation, target);
+  const polyline = window.L.polyline(routeData.coordinates, {
+    color: '#f59e0b',
+    weight: 4,
+    opacity: 0.9,
+    dashArray: routeData.source === 'fallback' ? '8 8' : undefined
+  });
+
+  polyline.addTo(serviceRouteLayer);
+  mapInstance.fitBounds(polyline.getBounds(), { padding: [28, 28] });
+  renderRouteSummary(target, routeData);
+}
+
+function getNearestVisibleItem() {
+  if (!Array.isArray(currentVisibleMapItems) || currentVisibleMapItems.length === 0) {
+    return null;
+  }
+
+  const withDistance = currentVisibleMapItems.filter((item) => Number.isFinite(item.distanceKm));
+  return withDistance[0] || currentVisibleMapItems[0] || null;
+}
+
 function renderMapLegend(items) {
   if (!mapLegendList) return;
 
@@ -736,6 +906,7 @@ function ensureServiceMap() {
     }).addTo(serviceMap);
 
     serviceMapLayer = window.L.layerGroup().addTo(serviceMap);
+    serviceRouteLayer = window.L.layerGroup().addTo(serviceMap);
   }
 
   return serviceMap;
@@ -805,6 +976,10 @@ async function renderServiceMap() {
     serviceMapLayer.clearLayers();
   }
 
+  if (serviceRouteLayer) {
+    serviceRouteLayer.clearLayers();
+  }
+
   const bounds = [];
 
   if (currentDeviceLocation) {
@@ -869,6 +1044,9 @@ async function renderServiceMap() {
     });
 
     marker.bindPopup(popupHtml);
+    marker.on('click', () => {
+      previewRouteToItem(item).catch((error) => console.error('No se pudo trazar la ruta al punto seleccionado.', error));
+    });
     marker.addTo(serviceMapLayer);
     bounds.push([item.lat, item.lng]);
   });
@@ -883,6 +1061,12 @@ async function renderServiceMap() {
     acc[item.type] = (acc[item.type] || 0) + 1;
     return acc;
   }, { profesional: 0, cliente: 0, solicitud: 0 });
+
+  currentVisibleMapItems = visibleItems;
+  const nearestItem = getNearestVisibleItem();
+  if (!selectedRouteItem || !visibleItems.some((item) => item.type === selectedRouteItem.type && item.id === selectedRouteItem.id)) {
+    selectedRouteItem = nearestItem;
+  }
 
   mapStatus.textContent = currentDeviceLocation ? 'Mapa por cercanía' : 'Mapa en vivo';
   if (mapSummary) {
@@ -902,6 +1086,7 @@ async function renderServiceMap() {
   }
 
   renderMapLegend(visibleItems);
+  renderRouteSummary(selectedRouteItem, null);
   window.setTimeout(() => mapInstance.invalidateSize(), 120);
 }
 
@@ -3372,6 +3557,13 @@ if (useCurrentLocationButton) {
     requestCurrentLocationForMap().catch((error) => {
       console.error('No se pudo activar la ubicación actual.', error);
     });
+  });
+}
+
+if (routeNearestButton) {
+  routeNearestButton.addEventListener('click', () => {
+    const nearestItem = getNearestVisibleItem();
+    previewRouteToItem(nearestItem).catch((error) => console.error('No se pudo calcular la ruta más cercana.', error));
   });
 }
 

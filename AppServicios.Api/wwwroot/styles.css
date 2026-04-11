@@ -502,6 +502,21 @@ body::selection {
   padding: 1.2rem;
 }
 
+.route-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.route-summary {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.route-summary .request-item {
+  background: rgba(255,255,255,0.03);
+}
+
 .map-toolbar {
   margin-top: 1rem;
   display: flex;

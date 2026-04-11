@@ -613,6 +613,26 @@
 
       <p class="mini-note map-distance-note" id="mapDistanceHint">Activa tu ubicación para ordenar perfiles y solicitudes por cercanía real.</p>
 
+      <div class="route-panel glass-panel neon-border">
+        <div class="request-list-head">
+          <strong>Ruta recomendada</strong>
+          <span class="mini-note" id="routeStatus">Activa tu ubicación para calcular tiempo estimado.</span>
+        </div>
+
+        <div class="route-summary" id="routeSummary">
+          <div class="request-item">
+            <strong>Sin ruta calculada</strong>
+            <small>Cuando detectemos tu ubicación podrás trazar una ruta hacia el profesional o solicitud más cercana.</small>
+          </div>
+        </div>
+
+        <div class="map-toolbar-actions">
+          <button type="button" class="btn btn-primary btn-small" id="routeNearestButton">Ver ruta al más cercano</button>
+          <a class="btn btn-secondary btn-small is-disabled payment-link-disabled" id="openGoogleMapsRouteButton" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Abrir en Google Maps</a>
+          <a class="btn btn-secondary btn-small is-disabled payment-link-disabled" id="openWazeRouteButton" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">Abrir en Waze</a>
+        </div>
+      </div>
+
       <div class="map-grid">
         <div class="map-stage glass-panel neon-border">
           <div id="serviceMap" class="map-canvas" aria-label="Mapa en vivo de AppServicios"></div>
