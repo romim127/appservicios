@@ -4,18 +4,17 @@
       <stop offset="0%" stop-color="#07111f" />
       <stop offset="100%" stop-color="#14315a" />
     </linearGradient>
-    <linearGradient id="accent192" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="shield192" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#6ef2ff" />
-      <stop offset="52%" stop-color="#9eff8a" />
+      <stop offset="55%" stop-color="#9eff8a" />
       <stop offset="100%" stop-color="#b86bff" />
     </linearGradient>
   </defs>
   <rect width="192" height="192" rx="44" fill="url(#bg192)" />
   <rect x="8" y="8" width="176" height="176" rx="38" fill="none" stroke="rgba(255,255,255,0.08)" />
-  <path d="M72 67v-8c0-11 9-20 20-20h8c11 0 20 9 20 20v8" fill="none" stroke="url(#accent192)" stroke-width="10" stroke-linecap="round" />
-  <rect x="44" y="68" width="104" height="76" rx="24" fill="url(#accent192)" />
-  <path d="M44 97h104" stroke="#07111f" stroke-opacity="0.22" stroke-width="4" />
-  <circle cx="88" cy="104" r="16" fill="none" stroke="#07111f" stroke-width="8" />
-  <path d="M99 115l18 18" stroke="#07111f" stroke-width="8" stroke-linecap="round" />
-  <circle cx="88" cy="104" r="4" fill="#07111f" />
+  <path d="M96 35 136 50v37.5c0 28.4-16.2 53-40 65-23.8-12-40-36.6-40-65V50z" fill="url(#shield192)" />
+  <path d="M96 42 130 55v32.4c0 22.9-13.5 43-34 53.3-20.5-10.3-34-30.4-34-53.3V55z" fill="#ffffff" opacity="0.08" />
+  <circle cx="87" cy="87" r="17" fill="none" stroke="#07111f" stroke-width="8" />
+  <path d="M98.5 98.5 117 117" fill="none" stroke="#07111f" stroke-width="8" stroke-linecap="round" />
+  <path d="M79.4 87.3l6 6 10.6-11.5" fill="none" stroke="#07111f" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
