@@ -172,6 +172,8 @@ let serviceRouteLayer = null;
 let currentDeviceLocation = null;
 let currentVisibleMapItems = [];
 let selectedRouteItem = null;
+let mapLocationWatchId = null;
+const MAP_DEVICE_LOCATION_KEY = 'appservicios-current-location';
 const mapGeoCache = new Map();
 const shownNotificationIds = new Set();
 const shownCoordinationGoalKeys = new Set();
@@ -205,8 +207,77 @@ window.fetch = (input, init = {}) => {
   return nativeFetch(input, { ...init, headers });
 };
 
+function persistCurrentDeviceLocation() {
+  try {
+    if (currentDeviceLocation && isValidMapCoordinate(currentDeviceLocation.lat, currentDeviceLocation.lng)) {
+      localStorage.setItem(MAP_DEVICE_LOCATION_KEY, JSON.stringify({
+        lat: Number(currentDeviceLocation.lat),
+        lng: Number(currentDeviceLocation.lng),
+        label: currentDeviceLocation.label || '',
+        fullLabel: currentDeviceLocation.fullLabel || '',
+        source: currentDeviceLocation.source || 'device',
+        updatedAt: currentDeviceLocation.updatedAt || new Date().toISOString()
+      }));
+      return;
+    }
+
+    localStorage.removeItem(MAP_DEVICE_LOCATION_KEY);
+  } catch {
+    // Ignorar persistencia si el entorno la bloquea.
+  }
+}
+
+function hydrateCurrentDeviceLocation() {
+  try {
+    const raw = localStorage.getItem(MAP_DEVICE_LOCATION_KEY);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    if (!isValidMapCoordinate(lat, lng)) return;
+
+    currentDeviceLocation = {
+      lat,
+      lng,
+      label: parsed?.label || `Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`,
+      fullLabel: parsed?.fullLabel || parsed?.label || 'Última ubicación conocida',
+      source: parsed?.source || 'cache',
+      updatedAt: parsed?.updatedAt || ''
+    };
+  } catch {
+    currentDeviceLocation = null;
+  }
+}
+
+function describeLocationSource(source) {
+  switch (source) {
+    case 'capacitor':
+    case 'capacitor-watch':
+      return 'GPS del dispositivo';
+    case 'browser':
+    case 'browser-watch':
+      return 'navegador';
+    case 'cache':
+      return 'última ubicación guardada';
+    default:
+      return 'ubicación detectada';
+  }
+}
+
+function updateCurrentLocationHint(location, labelOverride = '') {
+  if (!mapDistanceHint || !location || !isValidMapCoordinate(location.lat, location.lng)) {
+    return;
+  }
+
+  const label = labelOverride || location.label || `Lat ${Number(location.lat).toFixed(4)}, Lon ${Number(location.lng).toFixed(4)}`;
+  const sourceLabel = describeLocationSource(location.source);
+  mapDistanceHint.textContent = `Ubicación actual detectada: ${label} (${sourceLabel}, ${Number(location.lat).toFixed(4)}, ${Number(location.lng).toFixed(4)}).`;
+}
+
 currentYear.textContent = new Date().getFullYear();
 hydrateMapGeoCache();
+hydrateCurrentDeviceLocation();
 
 function resolveTheme(theme) {
   if (theme === 'system') {
@@ -551,7 +622,129 @@ async function getCurrentMapPosition() {
   };
 }
 
-async function requestCurrentLocationForMap() {
+async function applyDetectedPosition(position, options = {}) {
+  const { render = true, resolveLabel = true } = options;
+  const lat = Number(position?.lat);
+  const lng = Number(position?.lng);
+
+  if (!isValidMapCoordinate(lat, lng)) {
+    throw new Error('La ubicación recibida no es válida.');
+  }
+
+  currentDeviceLocation = {
+    lat,
+    lng,
+    label: currentDeviceLocation?.label || `Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`,
+    fullLabel: currentDeviceLocation?.fullLabel || 'Tu ubicación actual',
+    source: position?.source || currentDeviceLocation?.source || 'device',
+    updatedAt: new Date().toISOString()
+  };
+
+  persistCurrentDeviceLocation();
+  applyCurrentLocationToInputs(currentDeviceLocation.label);
+  updateCurrentLocationHint(currentDeviceLocation);
+
+  if (mapStatus) {
+    mapStatus.textContent = 'Ubicación detectada';
+  }
+
+  const mapInstance = ensureServiceMap();
+  if (mapInstance) {
+    mapInstance.setView([lat, lng], 13);
+    window.setTimeout(() => mapInstance.invalidateSize(), 80);
+  }
+
+  if (render) {
+    await renderServiceMap();
+  }
+
+  if (!resolveLabel) {
+    return;
+  }
+
+  const reverse = await reverseGeocodeCoordinates(lat, lng);
+  currentDeviceLocation = {
+    ...currentDeviceLocation,
+    label: reverse.shortLabel,
+    fullLabel: reverse.fullLabel,
+    updatedAt: new Date().toISOString()
+  };
+
+  persistCurrentDeviceLocation();
+  applyCurrentLocationToInputs(reverse.shortLabel);
+  updateCurrentLocationHint(currentDeviceLocation, reverse.shortLabel);
+
+  if (render) {
+    await renderServiceMap();
+  }
+}
+
+async function startWatchingCurrentLocationForMap() {
+  if (mapLocationWatchId) {
+    return mapLocationWatchId;
+  }
+
+  const onLocationUpdate = (coords, source) => {
+    const lat = Number(coords?.latitude ?? coords?.lat);
+    const lng = Number(coords?.longitude ?? coords?.lng);
+    if (!isValidMapCoordinate(lat, lng)) {
+      return;
+    }
+
+    const previous = currentDeviceLocation;
+    const movedEnough = !previous
+      || Math.abs(Number(previous.lat) - lat) > 0.0005
+      || Math.abs(Number(previous.lng) - lng) > 0.0005;
+
+    if (!movedEnough) {
+      return;
+    }
+
+    applyDetectedPosition({ lat, lng, source }, { render: true, resolveLabel: false }).catch((error) => {
+      console.warn('No se pudo refrescar la ubicación en vivo.', error);
+    });
+  };
+
+  const capacitorBridge = window.Capacitor;
+  const capacitorGeolocation = capacitorBridge?.Plugins?.Geolocation;
+  const isNativePlatform = typeof capacitorBridge?.isNativePlatform === 'function' && capacitorBridge.isNativePlatform();
+
+  if (isNativePlatform && capacitorGeolocation?.watchPosition) {
+    mapLocationWatchId = await capacitorGeolocation.watchPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }, (position, err) => {
+      if (err) {
+        console.warn('Seguimiento GPS no disponible temporalmente.', err);
+        return;
+      }
+
+      if (position?.coords) {
+        onLocationUpdate(position.coords, 'capacitor-watch');
+      }
+    });
+
+    return mapLocationWatchId;
+  }
+
+  if ('geolocation' in navigator) {
+    mapLocationWatchId = navigator.geolocation.watchPosition((position) => {
+      onLocationUpdate(position.coords, 'browser-watch');
+    }, (error) => {
+      console.warn('Seguimiento del navegador no disponible.', error);
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    });
+  }
+
+  return mapLocationWatchId;
+}
+
+async function requestCurrentLocationForMap(options = {}) {
+  const { silent = false, autoWatch = true } = options;
   const originalButtonText = useCurrentLocationButton?.textContent || 'Usar mi ubicación actual';
   if (useCurrentLocationButton) {
     useCurrentLocationButton.disabled = true;
@@ -565,43 +758,25 @@ async function requestCurrentLocationForMap() {
 
   try {
     const position = await getCurrentMapPosition();
-    const lat = Number(position.lat);
-    const lng = Number(position.lng);
-    const reverse = await reverseGeocodeCoordinates(lat, lng);
+    await applyDetectedPosition(position, { render: true, resolveLabel: true });
 
-    currentDeviceLocation = {
-      lat,
-      lng,
-      label: reverse.shortLabel,
-      fullLabel: reverse.fullLabel,
-      source: position.source
-    };
-
-    applyCurrentLocationToInputs(reverse.shortLabel);
-
-    const mapInstance = ensureServiceMap();
-    if (mapInstance) {
-      mapInstance.setView([lat, lng], 13);
+    if (autoWatch) {
+      await startWatchingCurrentLocationForMap();
     }
-
-    if (mapDistanceHint) {
-      const sourceLabel = position.source === 'capacitor' ? 'GPS del dispositivo' : 'navegador';
-      mapDistanceHint.textContent = `Ubicación actual detectada: ${reverse.shortLabel} (${sourceLabel}). Ahora puedes ordenar y filtrar por cercanía.`;
-    }
-
-    await renderServiceMap();
   } catch (error) {
-    currentDeviceLocation = null;
-
     if (mapStatus) {
-      mapStatus.textContent = 'Ubicación no disponible';
+      mapStatus.textContent = currentDeviceLocation ? 'Usando última ubicación conocida' : 'Ubicación no disponible';
     }
 
     if (mapDistanceHint) {
-      mapDistanceHint.textContent = 'No pudimos obtener tu ubicación actual. Revisa los permisos del navegador o del teléfono.';
+      mapDistanceHint.textContent = currentDeviceLocation
+        ? `No pudimos refrescar el GPS ahora. Seguimos mostrando ${currentDeviceLocation.label || 'la última ubicación conocida'}.`
+        : 'No pudimos obtener tu ubicación actual. Revisa los permisos del navegador o del teléfono.';
     }
 
-    throw error;
+    if (!silent) {
+      throw error;
+    }
   } finally {
     if (useCurrentLocationButton) {
       useCurrentLocationButton.disabled = false;
@@ -1152,7 +1327,8 @@ async function renderServiceMap() {
 
   if (mapDistanceHint) {
     if (currentDeviceLocation) {
-      mapDistanceHint.textContent = `Tu ubicación actual está centrada en el mapa${radiusKm > 0 ? ` y el filtro quedó aplicado hasta ${radiusKm} km.` : '.'}`;
+      const locationLabel = currentDeviceLocation.label || `Lat ${Number(currentDeviceLocation.lat).toFixed(4)}, Lon ${Number(currentDeviceLocation.lng).toFixed(4)}`;
+      mapDistanceHint.textContent = `Tu ubicación actual (${locationLabel}) está centrada en el mapa${radiusKm > 0 ? ` y el filtro quedó aplicado hasta ${radiusKm} km.` : '.'}`;
     } else if (radiusKm > 0) {
       mapDistanceHint.textContent = 'Seleccionaste un radio, pero necesitas activar tu ubicación actual para filtrar por cercanía.';
     }
@@ -3876,7 +4052,20 @@ async function loadHomeData() {
     }
 
     await Promise.all([loadRequests(), loadProfessionalDashboard(), loadCoordinationDashboard()]);
-    renderServiceMap().catch((error) => console.error('No se pudo renderizar el mapa.', error));
+    renderServiceMap()
+      .then(() => {
+        const isNativePlatform = typeof window.Capacitor?.isNativePlatform === 'function' && window.Capacitor.isNativePlatform();
+        if (isNativePlatform) {
+          return requestCurrentLocationForMap({ silent: true, autoWatch: true });
+        }
+
+        if (currentDeviceLocation) {
+          updateCurrentLocationHint(currentDeviceLocation, currentDeviceLocation.label);
+        }
+
+        return Promise.resolve();
+      })
+      .catch((error) => console.error('No se pudo renderizar el mapa.', error));
     updatePreview();
   } catch (error) {
     console.error(error);
