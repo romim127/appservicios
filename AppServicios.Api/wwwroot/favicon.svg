@@ -11,9 +11,10 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="18" fill="url(#bg64)" />
-  <path d="M18 21c5-7 23-7 28 0" fill="none" stroke="url(#accent64)" stroke-width="4" stroke-linecap="round" />
-  <circle cx="18" cy="21" r="3.8" fill="#9eff8a" />
-  <circle cx="46" cy="21" r="3.8" fill="#6ef2ff" />
-  <path d="M32 24c-6.3 0-11.5 5.2-11.5 11.5C20.5 44.4 32 54 32 54s11.5-9.6 11.5-18.5C43.5 29.2 38.3 24 32 24Z" fill="url(#accent64)" />
-  <path d="M32 28.5l5.4 12.5H34l-1-2.5h-5.4l-1.1 2.5H23l5.6-12.5H32Zm-0.2 4.2-2.1 4.8H34l-2.2-4.8Z" fill="#07111f" />
+  <path d="M24 23v-2.5c0-3.8 3.1-6.9 6.9-6.9h2.2c3.8 0 6.9 3.1 6.9 6.9V23" fill="none" stroke="url(#accent64)" stroke-width="3.6" stroke-linecap="round" />
+  <rect x="16" y="24" width="32" height="24" rx="8" fill="url(#accent64)" />
+  <path d="M16 34h32" stroke="#07111f" stroke-opacity="0.22" stroke-width="1.5" />
+  <circle cx="29" cy="35" r="5.2" fill="none" stroke="#07111f" stroke-width="3" />
+  <path d="M33 39l6 6" stroke="#07111f" stroke-width="3.4" stroke-linecap="round" />
+  <circle cx="29" cy="35" r="1.4" fill="#07111f" />
 </svg>

@@ -12,9 +12,10 @@
   </defs>
   <rect width="192" height="192" rx="44" fill="url(#bg192)" />
   <rect x="8" y="8" width="176" height="176" rx="38" fill="none" stroke="rgba(255,255,255,0.08)" />
-  <path d="M52 63C68 41 124 41 140 63" fill="none" stroke="url(#accent192)" stroke-width="10" stroke-linecap="round" />
-  <circle cx="52" cy="63" r="10" fill="#9eff8a" />
-  <circle cx="140" cy="63" r="10" fill="#6ef2ff" />
-  <path d="M96 70c-19.1 0-34 14.9-34 34 0 25.7 34 56 34 56s34-30.3 34-56c0-19.1-14.9-34-34-34Z" fill="url(#accent192)" />
-  <path d="M96 84l15.5 35h-9.6l-2.7-6.9H83.3l-2.8 6.9H71L87 84h9Zm-0.5 11.7-6 14h11.9l-5.9-14Z" fill="#07111f" />
+  <path d="M72 67v-8c0-11 9-20 20-20h8c11 0 20 9 20 20v8" fill="none" stroke="url(#accent192)" stroke-width="10" stroke-linecap="round" />
+  <rect x="44" y="68" width="104" height="76" rx="24" fill="url(#accent192)" />
+  <path d="M44 97h104" stroke="#07111f" stroke-opacity="0.22" stroke-width="4" />
+  <circle cx="88" cy="104" r="16" fill="none" stroke="#07111f" stroke-width="8" />
+  <path d="M99 115l18 18" stroke="#07111f" stroke-width="8" stroke-linecap="round" />
+  <circle cx="88" cy="104" r="4" fill="#07111f" />
 </svg>
