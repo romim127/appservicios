@@ -52,6 +52,8 @@ const proExperienceInput = document.getElementById('proExperienceInput');
 const proRateInput = document.getElementById('proRateInput');
 const proReachInput = document.getElementById('proReachInput');
 const proGoalInput = document.getElementById('proGoalInput');
+const proFarJobsInput = document.getElementById('proFarJobsInput');
+const proDistanceBonusInput = document.getElementById('proDistanceBonusInput');
 const proDescriptionInput = document.getElementById('proDescriptionInput');
 const aiRubroDescription = document.getElementById('aiRubroDescription');
 const aiRubroButton = document.getElementById('aiRubroButton');
@@ -496,6 +498,27 @@ function formatDistanceKm(distanceKm) {
   if (!Number.isFinite(value)) return 'distancia no disponible';
   if (value < 1) return `${Math.round(value * 1000)} m`;
   return `${value.toFixed(value < 10 ? 1 : 0)} km`;
+}
+
+function buildDistanceFinanceSummary(item) {
+  const parts = [];
+  const distance = Number(item?.distanciaKm);
+  const traslado = Number(item?.costoTraslado);
+  const incentivo = Number(item?.incentivo);
+
+  if (Number.isFinite(distance) && distance > 0) {
+    parts.push(`Distancia: ${formatDistanceKm(distance)}`);
+  }
+
+  if (Number.isFinite(traslado) && traslado > 0) {
+    parts.push(`Traslado: ${formatCurrency(traslado)}`);
+  }
+
+  if (Number.isFinite(incentivo) && incentivo > 0) {
+    parts.push(`Bono extra: ${formatCurrency(incentivo)}`);
+  }
+
+  return parts.join(' · ');
 }
 
 function calculateDistanceKm(lat1, lng1, lat2, lng2) {
@@ -2076,6 +2099,18 @@ function updateRegisterGate() {
   }
 }
 
+function syncDistanceBonusInputState() {
+  if (!proDistanceBonusInput) return;
+
+  const acceptsFarJobs = !!proFarJobsInput?.checked;
+  proDistanceBonusInput.disabled = !acceptsFarJobs;
+  proDistanceBonusInput.classList.toggle('is-disabled', !acceptsFarJobs);
+
+  if (!acceptsFarJobs) {
+    proDistanceBonusInput.value = '0';
+  }
+}
+
 function resolveSelectedRubroIds() {
   const normalizedSector = normalizeText(currentSector);
   if (!normalizedSector) return [];
@@ -2141,15 +2176,29 @@ async function submitRegistration() {
       const tariff = Number(proRateInput?.value || 0);
       const reach = Number(proReachInput?.value || 10);
       const goal = Number(proGoalInput?.value || 0);
+      const acceptsFarJobs = !!proFarJobsInput?.checked;
+      const distanceBonus = Math.max(0, Number(proDistanceBonusInput?.value || 0));
       const description = proDescriptionInput?.value.trim() || '';
 
       if (description.length < 10) {
         throw new Error('La descripción profesional debe tener al menos 10 caracteres.');
       }
 
+      if (!Number.isFinite(distanceBonus) || distanceBonus < 0) {
+        throw new Error('El bono por kilómetro extra debe ser un número válido mayor o igual a 0.');
+      }
+
       const ensuredUser = await createOrUpdateProfessionalUser(data.userPayload);
       const existingProfessionalSession = await fetchSessionContext(ensuredUser.id);
       const existingProfessionalId = Number(existingProfessionalSession?.profesionalId || 0);
+
+      let existingProfessionalData = null;
+      if (existingProfessionalId > 0) {
+        const existingProfessionalResponse = await fetch(`/api/Profesionales/${existingProfessionalId}`);
+        if (existingProfessionalResponse.ok) {
+          existingProfessionalData = await existingProfessionalResponse.json();
+        }
+      }
 
       const professionalCoords = await resolveCoordinatesForPayload(data.ubicacion);
 
@@ -2163,9 +2212,9 @@ async function submitRegistration() {
         tarifaBase: tariff,
         radioAlcanceKm: reach,
         gananciaMensualObjetivo: goal,
-        gananciaMensualActual: 0,
-        aceptaTrabajoLejano: true,
-        bonoPorDistancia: 0,
+        gananciaMensualActual: Number(existingProfessionalData?.gananciaMensualActual || 0),
+        aceptaTrabajoLejano: acceptsFarJobs,
+        bonoPorDistancia: acceptsFarJobs ? distanceBonus : 0,
         rubroIds
       };
 
@@ -3240,12 +3289,14 @@ function renderRequestList(items) {
 
   items.slice(0, 8).forEach((item) => {
     const card = document.createElement('div');
+    const distanceSummary = buildDistanceFinanceSummary(item);
     card.className = 'request-item';
     card.innerHTML = `
       <strong>${item.servicioNombre || 'Servicio'}</strong>
       <small>${item.descripcion || 'Sin descripción'}</small>
       <small>Estado: ${item.estado || 'Pendiente'} · Fecha: ${formatDateLabel(item.fechaRequerida)}</small>
       <small>Presupuesto: ${formatCurrency(item.presupuestoEstimado || 0)}</small>
+      ${distanceSummary ? `<small>${distanceSummary}</small>` : ''}
       <div class="inline-actions">
         <button class="action-btn complete" data-open-chat="${item.id}">Abrir chat</button>
       </div>
@@ -3308,12 +3359,14 @@ function renderProfessionalLists(items) {
   } else {
     pending.slice(0, 10).forEach((item) => {
       const card = document.createElement('div');
+      const distanceSummary = buildDistanceFinanceSummary(item);
       card.className = 'request-item';
       card.innerHTML = `
         <strong>${formatRequestTitle(item)}</strong>
         <small>${item.descripcion || 'Sin descripción'}</small>
         <small>Cliente: ${item.clienteNombre || 'N/A'} · Fecha: ${formatDateLabel(item.fechaRequerida)}</small>
         <small>Presupuesto: ${formatCurrency(item.presupuestoEstimado || 0)}</small>
+        ${distanceSummary ? `<small>${distanceSummary}</small>` : ''}
         <div class="inline-actions">
           <button class="action-btn accept" data-action="accept" data-id="${item.id}">Aceptar</button>
           <button class="action-btn reject" data-action="reject" data-id="${item.id}">Rechazar</button>
@@ -3344,6 +3397,7 @@ function renderProfessionalLists(items) {
 
   assigned.slice(0, 10).forEach((item) => {
     const card = document.createElement('div');
+    const distanceSummary = buildDistanceFinanceSummary(item);
     card.className = 'request-item';
     const canComplete = item.estado === 'Aceptado';
     card.innerHTML = `
@@ -3351,6 +3405,7 @@ function renderProfessionalLists(items) {
       <small>Estado: ${item.estado}</small>
       <small>${item.descripcion || 'Sin descripción'}</small>
       <small>Presupuesto: ${formatCurrency(item.presupuestoEstimado || 0)}</small>
+      ${distanceSummary ? `<small>${distanceSummary}</small>` : ''}
       <div class="inline-actions">
         ${canComplete ? `<button class="action-btn complete" data-action="complete" data-id="${item.id}">Marcar completado</button>` : ''}
         <button class="action-btn complete" data-open-chat="${item.id}">Abrir chat</button>
@@ -3455,15 +3510,14 @@ async function updateRequestStatus(requestId, action) {
     });
 
     if (!updateRes.ok) {
-      const errorText = await updateRes.text();
-      throw new Error(errorText || 'No se pudo actualizar el estado de la solicitud.');
+      throw new Error(await extractApiError(updateRes));
     }
 
     if (proFeedback) proFeedback.textContent = 'Estado actualizado correctamente.';
     await Promise.all([loadProfessionalDashboard(), loadRequests(), loadCoordinationDashboard()]);
   } catch (error) {
     console.error(error);
-    if (proFeedback) proFeedback.textContent = 'No se pudo actualizar la solicitud.';
+    if (proFeedback) proFeedback.textContent = error.message || 'No se pudo actualizar la solicitud.';
   }
 }
 
@@ -3704,6 +3758,10 @@ if (termsCheckbox) {
   termsCheckbox.addEventListener('change', updateRegisterGate);
 }
 
+if (proFarJobsInput) {
+  proFarJobsInput.addEventListener('change', syncDistanceBonusInputState);
+}
+
 if (startPaymentButton) {
   startPaymentButton.addEventListener('click', startProfessionalPayment);
 }
@@ -3766,6 +3824,8 @@ if (registerContinueButton) {
   proRateInput,
   proReachInput,
   proGoalInput,
+  proFarJobsInput,
+  proDistanceBonusInput,
   proDescriptionInput
 ].forEach((element) => {
   if (element) {
@@ -3969,6 +4029,7 @@ setActiveAuthTab('login');
 setSelectedSector('TECNOLOGIA Y SISTEMAS');
 setAccountRole('cliente');
 setTodayAsDefaultDate();
+syncDistanceBonusInputState();
 resetProfessionalPaymentState();
 applySessionUI();
 updateRegisterGate();

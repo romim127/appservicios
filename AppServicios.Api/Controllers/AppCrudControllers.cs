@@ -852,6 +852,7 @@ namespace AppServicios.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<SolicitudTrabajoDto>> Create([FromBody] SolicitudTrabajoUpsertDto request)
         {
+            await ApplyAutomaticSolicitudRulesAsync(request, null);
             await ValidateSolicitudAsync(request, null);
             if (!ModelState.IsValid)
             {
@@ -861,6 +862,7 @@ namespace AppServicios.Api.Controllers
             var solicitud = new SolicitudTrabajo();
             MapToEntity(request, solicitud, isCreate: true);
             _context.SolicitudesTrabajo.Add(solicitud);
+            await SyncProfessionalProgressAsync(solicitud, null, null, 0m);
             await _context.SaveChangesAsync();
 
             await LoadSolicitudRelationsAsync(solicitud);
@@ -894,6 +896,7 @@ namespace AppServicios.Api.Controllers
                 return NotFound();
             }
 
+            await ApplyAutomaticSolicitudRulesAsync(request, solicitud);
             await ValidateSolicitudAsync(request, solicitud);
             if (!ModelState.IsValid)
             {
@@ -902,8 +905,10 @@ namespace AppServicios.Api.Controllers
 
             var previousEstado = solicitud.Estado;
             var previousProfesionalId = solicitud.ProfesionalId;
+            var previousIngreso = CalculateProfessionalPayout(solicitud);
 
             MapToEntity(request, solicitud, isCreate: false);
+            await SyncProfessionalProgressAsync(solicitud, previousEstado, previousProfesionalId, previousIngreso);
             await _context.SaveChangesAsync();
             await LoadSolicitudRelationsAsync(solicitud);
             await CreateNotificationsForSolicitudStatusChangeAsync(solicitud, previousEstado, previousProfesionalId);
@@ -1046,6 +1051,11 @@ namespace AppServicios.Api.Controllers
                     {
                         ModelState.AddModelError(nameof(request.ProfesionalId), "Solo puedes aceptarte a ti mismo en una solicitud.");
                     }
+
+                    if (current.ProfesionalId.HasValue && current.ProfesionalId.Value != profesionalId.Value)
+                    {
+                        ModelState.AddModelError(nameof(request.ProfesionalId), "Esta solicitud ya fue tomada por otro profesional.");
+                    }
                 }
                 else if (string.Equals(estadoProfesional, "Rechazado", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1080,6 +1090,186 @@ namespace AppServicios.Api.Controllers
             }
 
             ModelState.AddModelError(nameof(request.UsuarioOperadorId), "El rol actual no tiene permisos para operar solicitudes.");
+        }
+
+        private async Task ApplyAutomaticSolicitudRulesAsync(SolicitudTrabajoUpsertDto request, SolicitudTrabajo? current)
+        {
+            request.Estado = string.IsNullOrWhiteSpace(request.Estado)
+                ? (current?.Estado ?? "Pendiente")
+                : request.Estado.Trim();
+
+            var isAccepted = string.Equals(request.Estado, "Aceptado", StringComparison.OrdinalIgnoreCase);
+            var isCompleted = string.Equals(request.Estado, "Completado", StringComparison.OrdinalIgnoreCase);
+            var requiresAssignedProfessional = isAccepted || isCompleted;
+
+            if (!request.ProfesionalId.HasValue || request.ProfesionalId.Value <= 0)
+            {
+                if (current is null)
+                {
+                    request.DistanciaKm = null;
+                    request.CostoTraslado = null;
+                    request.Incentivo = null;
+                    request.PresupuestoFinal = requiresAssignedProfessional ? request.PresupuestoFinal : null;
+                }
+
+                if (!isCompleted)
+                {
+                    request.FechaCompletacion = null;
+                }
+
+                return;
+            }
+
+            var profesional = await _context.Profesionales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == request.ProfesionalId.Value);
+
+            if (profesional is null)
+            {
+                return;
+            }
+
+            var resolvedDistance = ResolveDistanceKm(request, current, profesional);
+            if (resolvedDistance.HasValue)
+            {
+                request.DistanciaKm = resolvedDistance.Value;
+            }
+
+            if (requiresAssignedProfessional && request.DistanciaKm.HasValue)
+            {
+                var distanceKm = Math.Max(0m, request.DistanciaKm.Value);
+                var extraKm = Math.Max(0m, distanceKm - profesional.RadioAlcanceKm);
+
+                if (extraKm > 0m && !profesional.AceptaTrabajoLejano)
+                {
+                    ModelState.AddModelError(
+                        nameof(request.ProfesionalId),
+                        $"La solicitud supera el radio de {profesional.RadioAlcanceKm} km configurado para este profesional. Activa la aceptación de trabajos lejanos para poder continuar.");
+                    return;
+                }
+
+                var bonusPerKm = Math.Max(0m, profesional.BonoPorDistancia);
+                var suggestedTravelCost = Math.Round(distanceKm * bonusPerKm, 2, MidpointRounding.AwayFromZero);
+                var suggestedIncentive = extraKm > 0m
+                    ? Math.Round(extraKm * bonusPerKm, 2, MidpointRounding.AwayFromZero)
+                    : 0m;
+
+                request.CostoTraslado = Math.Max(request.CostoTraslado ?? 0m, suggestedTravelCost);
+                request.Incentivo = Math.Max(request.Incentivo ?? 0m, suggestedIncentive);
+
+                var minimumFinalBudget = request.PresupuestoEstimado + (request.CostoTraslado ?? 0m) + (request.Incentivo ?? 0m);
+                request.PresupuestoFinal = Math.Max(request.PresupuestoFinal ?? 0m, minimumFinalBudget);
+            }
+
+            if (requiresAssignedProfessional)
+            {
+                request.FechaAceptacion ??= DateTime.UtcNow;
+            }
+
+            if (isCompleted)
+            {
+                request.FechaCompletacion ??= DateTime.UtcNow;
+            }
+            else
+            {
+                request.FechaCompletacion = null;
+            }
+        }
+
+        private async Task SyncProfessionalProgressAsync(SolicitudTrabajo solicitud, string? previousEstado, int? previousProfesionalId, decimal previousIngreso)
+        {
+            var previousWasCompleted = previousProfesionalId.HasValue
+                && string.Equals(previousEstado, "Completado", StringComparison.OrdinalIgnoreCase);
+
+            if (previousWasCompleted && previousProfesionalId.HasValue)
+            {
+                var previousProfessionalIdValue = previousProfesionalId.GetValueOrDefault();
+                var previousProfessional = await _context.Profesionales.FirstOrDefaultAsync(p => p.Id == previousProfessionalIdValue);
+                if (previousProfessional is not null)
+                {
+                    previousProfessional.GananciaMensualActual = Math.Max(0m, previousProfessional.GananciaMensualActual - previousIngreso);
+                    previousProfessional.TotalTrabajos = Math.Max(0, previousProfessional.TotalTrabajos - 1);
+                }
+            }
+
+            var currentIsCompleted = solicitud.ProfesionalId.HasValue
+                && string.Equals(solicitud.Estado, "Completado", StringComparison.OrdinalIgnoreCase);
+
+            if (!currentIsCompleted)
+            {
+                return;
+            }
+
+            var currentProfessional = await _context.Profesionales.FirstOrDefaultAsync(p => p.Id == solicitud.ProfesionalId!.Value);
+            if (currentProfessional is null)
+            {
+                return;
+            }
+
+            var currentIngreso = CalculateProfessionalPayout(solicitud);
+            currentProfessional.GananciaMensualActual += currentIngreso;
+            currentProfessional.TotalTrabajos += 1;
+        }
+
+        private static decimal CalculateProfessionalPayout(SolicitudTrabajo solicitud)
+        {
+            if (!string.Equals(solicitud.Estado, "Completado", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0m;
+            }
+
+            return solicitud.PresupuestoFinal
+                ?? (solicitud.PresupuestoEstimado + (solicitud.CostoTraslado ?? 0m) + (solicitud.Incentivo ?? 0m));
+        }
+
+        private static decimal? ResolveDistanceKm(SolicitudTrabajoUpsertDto request, SolicitudTrabajo? current, Profesional profesional)
+        {
+            var distances = new List<decimal>();
+
+            if (request.DistanciaKm.HasValue && request.DistanciaKm.Value > 0)
+            {
+                distances.Add(request.DistanciaKm.Value);
+            }
+
+            if (current?.DistanciaKm is decimal currentDistance && currentDistance > 0)
+            {
+                distances.Add(currentDistance);
+            }
+
+            if (IsValidCoordinate(request.Latitud, request.Longitud) && IsValidCoordinate(profesional.Latitud, profesional.Longitud))
+            {
+                var geoDistance = CalculateDistanceKm(profesional.Latitud, profesional.Longitud, request.Latitud, request.Longitud);
+                if (geoDistance > 0)
+                {
+                    distances.Add(geoDistance);
+                }
+            }
+
+            return distances.Count > 0 ? distances.Max() : null;
+        }
+
+        private static bool IsValidCoordinate(double lat, double lng)
+            => Math.Abs(lat) > 0.001
+                && Math.Abs(lng) > 0.001
+                && lat >= -90 && lat <= 90
+                && lng >= -180 && lng <= 180;
+
+        private static decimal CalculateDistanceKm(double lat1, double lng1, double lat2, double lng2)
+        {
+            const double earthRadiusKm = 6371d;
+
+            static double ToRadians(double value) => value * Math.PI / 180d;
+
+            var dLat = ToRadians(lat2 - lat1);
+            var dLng = ToRadians(lng2 - lng1);
+            var originLat = ToRadians(lat1);
+            var targetLat = ToRadians(lat2);
+
+            var a = Math.Pow(Math.Sin(dLat / 2d), 2d)
+                + Math.Cos(originLat) * Math.Cos(targetLat) * Math.Pow(Math.Sin(dLng / 2d), 2d);
+
+            var c = 2d * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1d - a));
+            return Math.Round((decimal)(earthRadiusKm * c), 2, MidpointRounding.AwayFromZero);
         }
 
         private int? GetAuthenticatedUserId()

@@ -466,6 +466,22 @@
                 </label>
               </div>
 
+              <div class="register-split">
+                <div class="form-field">
+                  <span>Trabajos lejanos</span>
+                  <label class="terms-check">
+                    <input type="checkbox" id="proFarJobsInput" checked />
+                    Aceptar solicitudes fuera del radio base
+                  </label>
+                  <small class="mini-note">Si lo desactivas, no podrás aceptar trabajos que superen tu alcance configurado.</small>
+                </div>
+                <label class="form-field">
+                  <span>Bono por km extra (ARS)</span>
+                  <input class="text-input" id="proDistanceBonusInput" type="number" min="0" step="50" value="150" />
+                  <small class="mini-note">Se usa para calcular traslado e incentivo cuando el trabajo supera tu radio.</small>
+                </label>
+              </div>
+
               <label class="form-field">
                 <span>Descripción profesional</span>
                 <textarea id="proDescriptionInput" rows="4">Técnico con experiencia en instalaciones, mantenimiento y atención a domicilio para resolver problemas reales.</textarea>
