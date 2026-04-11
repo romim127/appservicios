@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AppServicios" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/icon-192.svg" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="/styles.css" />
@@ -22,7 +23,9 @@
 
   <header class="topbar">
     <a class="brand" href="#inicio" aria-label="Ir al inicio de AppServicios">
-      <span class="brand-mark">AS</span>
+      <span class="brand-mark" aria-hidden="true">
+        <img src="/logo.svg" alt="" />
+      </span>
       <span>
         <strong>AppServicios</strong>
         <small>Trabajo real, experiencia moderna</small>

@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AppServicios">
   <defs>
-    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#6ef2ff"/>
-      <stop offset="100%" stop-color="#b86bff"/>
+    <linearGradient id="bg64" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#07111f" />
+      <stop offset="100%" stop-color="#14315a" />
+    </linearGradient>
+    <linearGradient id="accent64" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6ef2ff" />
+      <stop offset="52%" stop-color="#9eff8a" />
+      <stop offset="100%" stop-color="#b86bff" />
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="18" fill="#08111f"/>
-  <path d="M18 34c5-10 23-10 28 0" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="23" cy="24" r="4" fill="#9eff8a"/>
-  <circle cx="41" cy="24" r="4" fill="#6ef2ff"/>
+  <rect width="64" height="64" rx="18" fill="url(#bg64)" />
+  <path d="M18 21c5-7 23-7 28 0" fill="none" stroke="url(#accent64)" stroke-width="4" stroke-linecap="round" />
+  <circle cx="18" cy="21" r="3.8" fill="#9eff8a" />
+  <circle cx="46" cy="21" r="3.8" fill="#6ef2ff" />
+  <path d="M32 24c-6.3 0-11.5 5.2-11.5 11.5C20.5 44.4 32 54 32 54s11.5-9.6 11.5-18.5C43.5 29.2 38.3 24 32 24Z" fill="url(#accent64)" />
+  <path d="M32 28.5l5.4 12.5H34l-1-2.5h-5.4l-1.1 2.5H23l5.6-12.5H32Zm-0.2 4.2-2.1 4.8H34l-2.2-4.8Z" fill="#07111f" />
 </svg>
