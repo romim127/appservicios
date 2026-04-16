@@ -1,3 +1,69 @@
+// --- MULTI-MONEDA: Configuración y lógica de moneda ---
+const CURRENCY_KEY = 'appservicios-currency';
+const currencySelect = document.getElementById('currencySelect');
+let currentCurrency = localStorage.getItem(CURRENCY_KEY) || 'ARS';
+
+function setCurrency(currency) {
+  currentCurrency = currency;
+  localStorage.setItem(CURRENCY_KEY, currency);
+  if (currencySelect) currencySelect.value = currency;
+  updateAllCurrencyDisplays();
+}
+
+function updateAllCurrencyDisplays() {
+  // Actualiza todos los elementos que muestran montos
+  // (esto puede ser más granular según la app, aquí solo fuerza updatePreview y payment)
+  updatePreview && updatePreview();
+  updatePaymentCurrency && updatePaymentCurrency();
+  // Puedes agregar más hooks aquí si hay más lugares con montos
+}
+
+if (currencySelect) {
+  currencySelect.value = currentCurrency;
+  currencySelect.addEventListener('change', (e) => {
+    setCurrency(e.target.value);
+  });
+}
+// --- FIN MULTI-MONEDA ---
+// --- INTEGRACIÓN FLUJO ONBOARDING: mostrar app tras login/registro exitoso ---
+function showAppAfterAuth() {
+  const wizard = document.getElementById('wizardEntry');
+  const header = document.getElementById('mainAppHeader');
+  const main = document.getElementById('inicio');
+  const footer = document.getElementById('mainAppFooter');
+  if (wizard) wizard.style.display = 'none';
+  if (header) header.style.display = '';
+  if (main) main.style.display = '';
+  if (footer) footer.style.display = '';
+}
+
+// Hook para login exitoso
+async function handleLoginAndShowApp(e) {
+  e.preventDefault();
+  await handleLogin();
+  if (currentSession) showAppAfterAuth();
+}
+
+// Hook para registro exitoso
+async function handleRegisterAndShowApp(e) {
+  e.preventDefault();
+  await submitRegistration();
+  if (currentSession) showAppAfterAuth();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Login
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLoginAndShowApp);
+  }
+  // Registro
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) {
+    registerForm.addEventListener('submit', handleRegisterAndShowApp);
+  }
+});
+// --- FIN INTEGRACIÓN FLUJO ONBOARDING ---
 const THEME_KEY = 'appservicios-theme';
 const SESSION_KEY = 'appservicios-session';
 const root = document.documentElement;
@@ -375,11 +441,27 @@ function setOfflineState() {
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('es-AR', {
+  let currency = currentCurrency || 'ARS';
+  let locales = 'es-AR';
+  if (currency === 'USD') locales = 'en-US';
+  if (currency === 'EUR') locales = 'es-ES';
+  return new Intl.NumberFormat(locales, {
     style: 'currency',
-    currency: 'ARS',
+    currency,
     maximumFractionDigits: 0
   }).format(value);
+}
+
+// Hook para actualizar la UI de pagos (placeholder, puedes expandirlo)
+function updatePaymentCurrency() {
+  // Ejemplo: actualizar textos de pago profesional
+  const paymentLabels = document.querySelectorAll('.payment-header strong, .payment-summary strong');
+  paymentLabels.forEach(el => {
+    if (el.textContent && el.textContent.match(/ARS|USD|EUR/)) {
+      el.textContent = formatCurrency(2500);
+    }
+  });
+  // También podrías actualizar otros montos fijos aquí
 }
 
 function formatCompactNumber(value) {
@@ -1784,8 +1866,8 @@ async function startProfessionalPayment() {
 
     const paymentPayload = {
       usuarioId: user.id,
-      monto: 2500,
-      moneda: 'ARS',
+      monto: 2500, // Aquí podrías agregar lógica para monto variable según moneda
+      moneda: currentCurrency || 'ARS',
       concepto: 'Alta profesional AppServicios',
       proveedor: 'Mercado Pago',
       detalle: `Alta profesional en ${currentSector} · ${data.ubicacion}`
@@ -2353,6 +2435,8 @@ function updatePreview() {
   if (previewMessage) previewMessage.textContent = message;
   if (previewUrgency) previewUrgency.textContent = urgency;
   if (previewBudget) previewBudget.textContent = formatCurrency(amount);
+    // Inicializar valores de presupuesto con la moneda correcta
+    updatePreview();
   if (featuredServiceName) featuredServiceName.textContent = selectedText;
 }
 

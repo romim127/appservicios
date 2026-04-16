@@ -327,15 +327,7 @@ namespace AppServicios.Api.Controllers
                 ModelState.AddModelError(nameof(request.UsuarioId), "El usuario debe tener rol Profesional para generar este pago.");
             }
 
-            if (request.Monto != 2500m)
-            {
-                ModelState.AddModelError(nameof(request.Monto), "El alta profesional tiene un valor fijo de ARS 2.500.");
-            }
-
-            if (!string.Equals(request.Moneda?.Trim(), "ARS", StringComparison.OrdinalIgnoreCase))
-            {
-                ModelState.AddModelError(nameof(request.Moneda), "La moneda del alta profesional debe ser ARS.");
-            }
+            // Permitir monto y moneda variable para multi-moneda
         }
 
         private HttpClient CreateMercadoPagoClient(string accessToken)

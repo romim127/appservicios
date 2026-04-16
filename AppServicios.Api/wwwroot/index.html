@@ -99,6 +99,15 @@
       <button type="button" data-theme-choice="dark">Oscuro</button>
       <button type="button" data-theme-choice="system">Sistema</button>
     </div>
+
+    <div class="currency-switch" role="group" aria-label="Cambiar moneda">
+      <label for="currencySelect" style="margin-right:0.5em; font-size:0.95em;">Moneda:</label>
+      <select id="currencySelect" style="padding:0.2em 0.7em; border-radius:8px;">
+        <option value="ARS">ARS $</option>
+        <option value="USD">USD $</option>
+        <option value="EUR">EUR €</option>
+      </select>
+    </div>
   </header>
 
   <main class="shell" id="inicio" style="display:none;">
@@ -358,11 +367,11 @@
           </label>
 
           <label class="form-field">
-            <span>Presupuesto estimado</span>
+            <span id="budgetLabel">Presupuesto estimado</span>
             <input type="range" id="budgetRange" min="5000" max="150000" step="1000" value="35000" />
           </label>
 
-          <strong class="budget-value" id="budgetValue">$ 35.000</strong>
+          <strong class="budget-value" id="budgetValue"></strong>
 
           <label class="form-field">
             <span>Mensaje</span>
@@ -375,7 +384,7 @@
             <p id="previewMessage">Necesito resolverlo pronto y comparar profesionales cercanos con buena reputación.</p>
             <div class="preview-meta">
               <span id="previewUrgency">Hoy</span>
-              <span id="previewBudget">$ 35.000</span>
+              <span id="previewBudget"></span>
             </div>
           </div>
         </aside>
