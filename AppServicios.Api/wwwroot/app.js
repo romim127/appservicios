@@ -424,8 +424,46 @@ function escapeHtml(value) {
 
 async function extractApiError(response) {
   try {
-    const contentType = response.headers.get('content-type') || '';
+    hydrateMapGeoCache();
+    hydrateCurrentDeviceLocation();
 
+  // --- INICIO: Geolocalización automática y fallback por IP ---
+  async function detectAndApplyInitialLocation() {
+    // 1. Intentar obtener ubicación por navegador/Capacitor
+    try {
+      const position = await getCurrentMapPosition();
+      await applyDetectedPosition(position, { render: true, resolveLabel: true });
+      await startWatchingCurrentLocationForMap();
+      return;
+    } catch (geoError) {
+      // 2. Si falla, intentar obtener por IP
+      try {
+        if (mapStatus) mapStatus.textContent = 'Buscando ubicación por IP...';
+        const resp = await fetch('https://ipapi.co/json');
+        if (!resp.ok) throw new Error('IP geolocation failed');
+        const data = await resp.json();
+        if (isValidMapCoordinate(data.latitude, data.longitude)) {
+          await applyDetectedPosition({ lat: data.latitude, lng: data.longitude, source: 'ip' }, { render: true, resolveLabel: true });
+          if (mapStatus) mapStatus.textContent = 'Ubicación aproximada por IP';
+          return;
+        }
+      } catch (ipError) {
+        // 3. Si ambos fallan, centrar mapa global
+        if (mapStatus) mapStatus.textContent = 'No se pudo detectar ubicación, mostrando mapa global.';
+        const mapInstance = ensureServiceMap();
+        if (mapInstance) {
+          mapInstance.setView([20, 0], 2); // Zoom global
+          window.setTimeout(() => mapInstance.invalidateSize(), 120);
+        }
+      }
+    }
+  }
+  // --- FIN: Geolocalización automática y fallback por IP ---
+
+  // Lanzar la detección automática al cargar la app (después de hidratar cachés)
+  window.addEventListener('DOMContentLoaded', () => {
+    detectAndApplyInitialLocation();
+  });
     if (contentType.includes('application/json')) {
       const body = await response.json();
 

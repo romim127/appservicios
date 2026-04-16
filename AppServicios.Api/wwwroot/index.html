@@ -21,7 +21,57 @@
   <div class="bg-orb bg-orb-b"></div>
   <div class="bg-grid"></div>
 
-  <header class="topbar">
+  <!-- WIZARD LOGIN/REGISTRO INTERACTIVO -->
+  <div id="wizardEntry" style="display:block;">
+    <div class="main-container">
+      <div class="login-panel">
+        <div class="logo">
+          <img src="/logo.svg?v=11" alt="Logo AppServicios" />
+          <h1>Bienvenido a AppServicios</h1>
+        </div>
+        <form id="loginForm" class="step-form">
+          <div class="step step-login active">
+            <label>Email</label>
+            <input type="email" placeholder="Tu email" required />
+            <label>Contraseña</label>
+            <input type="password" placeholder="Contraseña" required />
+            <button type="submit" id="wizardFinishBtn">Ingresar</button>
+            <div class="step-links">
+              <span>¿No tienes cuenta?</span>
+              <a href="#" id="goToRegister">Registrarme</a>
+            </div>
+          </div>
+          <div class="step step-register">
+            <label>Nombre completo</label>
+            <input type="text" placeholder="Tu nombre" required />
+            <label>Email</label>
+            <input type="email" placeholder="Tu email" required />
+            <label>Contraseña</label>
+            <input type="password" placeholder="Elige una contraseña" required />
+            <button type="submit" id="wizardFinishBtn">Crear cuenta</button>
+            <div class="step-links">
+              <a href="#" id="backToLogin">Volver a login</a>
+            </div>
+          </div>
+          <div class="step step-role">
+            <p>¿Qué necesitas hoy?</p>
+            <button type="button" class="role-btn" data-role="cliente">Soy Cliente</button>
+            <button type="button" class="role-btn" data-role="profesional">Soy Profesional</button>
+          </div>
+        </form>
+      </div>
+      <div class="instructions-panel">
+        <div id="wizardMessage" class="wizard-message">
+          <strong>¡Bienvenido a AppServicios!</strong>
+          <p>Para comenzar, ingresa tu email y contraseña.<br>
+          Si es tu primer vez, haz clic en “Registrarme”.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- FIN WIZARD LOGIN/REGISTRO -->
+
+  <header class="topbar" id="mainAppHeader" style="display:none;">
     <a class="brand" href="#inicio" aria-label="Ir al inicio de AppServicios">
       <span class="brand-mark" aria-hidden="true">
         <img src="/logo.svg?v=11" alt="" />
@@ -51,7 +101,7 @@
     </div>
   </header>
 
-  <main class="shell" id="inicio">
+  <main class="shell" id="inicio" style="display:none;">
     <section class="hero">
       <div class="hero-copy glass-panel">
         <div class="brand-banner">
@@ -1105,7 +1155,7 @@
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" id="mainAppFooter" style="display:none;">
     <p>© <span id="currentYear"></span> AppServicios · Diseño inicial UX/UI con identidad moderna y adaptable.</p>
   </footer>
 
@@ -1113,5 +1163,23 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="/app.js"></script>
+  <script>
+    // Mostrar solo el wizard al inicio, y mostrar la app solo tras login/registro exitoso
+    function onWizardComplete() {
+      document.getElementById('wizardEntry').style.display = 'none';
+      document.getElementById('mainAppHeader').style.display = '';
+      document.getElementById('inicio').style.display = '';
+      document.getElementById('mainAppFooter').style.display = '';
+    }
+    // Suponiendo que el botón final del wizard tiene id="wizardFinishBtn":
+    document.addEventListener('DOMContentLoaded', function() {
+      var finishBtn = document.getElementById('wizardFinishBtn');
+      if (finishBtn) {
+        finishBtn.addEventListener('click', function() {
+          onWizardComplete();
+        });
+      }
+    });
+  </script>
 </body>
 </html>
