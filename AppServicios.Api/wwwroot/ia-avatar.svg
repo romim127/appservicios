@@ -1,0 +1,59 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="220" height="220" viewBox="0 0 220 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#1A1A1A" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4D4D4D"/>
+      <stop offset="100%" stop-color="#1A1A1A"/>
+    </linearGradient>
+    <linearGradient id="carbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1A1A1A"/>
+      <stop offset="100%" stop-color="#4D4D4D"/>
+    </linearGradient>
+    <radialGradient id="glowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.1"/>
+    </radialGradient>
+    <radialGradient id="oled" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1A1A2E"/>
+      <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.1"/>
+    </radialGradient>
+  </defs>
+  <!-- Fondo circular y brutalista -->
+  <circle cx="160" cy="160" r="150" fill="url(#bg)" stroke="#00FFFF" stroke-width="6"/>
+  <circle cx="160" cy="160" r="140" fill="none" stroke="#00FFFF" stroke-width="2" opacity="0.18"/>
+  <circle cx="160" cy="160" r="155" fill="none" stroke="#FFA500" stroke-width="1.5" opacity="0.08"/>
+  <!-- Mango de fibra de carbono (más largo y centrado) -->
+  <rect x="150" y="60" width="20" height="180" rx="8" fill="url(#carbon)" stroke="#4D4D4D" stroke-width="3"/>
+  <!-- Pantalla OLED flexible -->
+  <rect x="145" y="110" width="30" height="30" rx="10" fill="url(#oled)" stroke="#00FFFF" stroke-width="2"/>
+  <!-- IA: ojo de ondas de datos -->
+  <circle cx="160" cy="125" r="8" fill="none" stroke="#00FFFF" stroke-width="3"/>
+  <circle cx="160" cy="125" r="4" fill="#00FFFF" opacity="0.7"/>
+  <circle cx="160" cy="125" r="2" fill="#FFA500"/>
+  <!-- Iconos en la pantalla -->
+  <!-- Herramientas cruzadas -->
+  <g opacity="0.7">
+    <rect x="153" y="135" width="2" height="10" rx="1" fill="#FFA500" transform="rotate(45 154 140)"/>
+    <rect x="165" y="135" width="2" height="10" rx="1" fill="#00FFFF" transform="rotate(-45 166 140)"/>
+  </g>
+  <!-- Gráfico de rendimiento -->
+  <polyline points="150,150 153,147 156,149 159,145 162,148 165,144" fill="none" stroke="#00FFFF" stroke-width="2"/>
+  <!-- Reloj -->
+  <circle cx="170" cy="150" r="6" fill="none" stroke="#FFA500" stroke-width="2"/>
+  <line x1="170" y1="150" x2="170" y2="146" stroke="#FFA500" stroke-width="2"/>
+  <line x1="170" y1="150" x2="174" y2="150" stroke="#FFA500" stroke-width="2"/>
+  <!-- Cables hidráulicos (más largos) -->
+  <path d="M155 100 Q120 200 160 250" stroke="#00FFFF" stroke-width="4" fill="none"/>
+  <path d="M165 100 Q200 200 160 250" stroke="#FFA500" stroke-width="3" fill="none"/>
+  <!-- Pala-herramienta: hoja (más abajo y grande) -->
+  <ellipse cx="160" cy="300" rx="70" ry="35" fill="url(#steel)" stroke="#00FFFF" stroke-width="3"/>
+  <!-- Bordes glowing -->
+  <ellipse cx="160" cy="300" rx="74" ry="39" fill="none" stroke="url(#glowCyan)" stroke-width="4"/>
+  <!-- Detalles de uso y número de serie -->
+  <rect x="120" y="320" width="80" height="12" rx="4" fill="#4D4D4D"/>
+  <text x="160" y="329" font-size="10" text-anchor="middle" fill="#FFA500" font-family="monospace">UNIT-GIG-01</text>
+</svg>

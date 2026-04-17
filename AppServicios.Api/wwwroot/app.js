@@ -149,18 +149,15 @@ if (aiAssistantForm) {
           // Buscar palabras clave de rubros comunes
           const rubros = ['plomero', 'electricista', 'gasista', 'pintor', 'técnico', 'refrigeración', 'niñera', 'cuidador', 'jardinero', 'carpintero', 'cerrajero', 'profesional', 'servicio'];
           for (let r of rubros) {
-            if (userText.toLowerCase().includes(r)) { rubro = r; break; }
+            if (userText.toLowerCase().includes(r)) {
+              rubro = r;
+              break;
+            }
           }
         }
-        if (rubro) {
-          response = `¡Claro que sí puedes inscribirte! Los/as ${rubro}s son muy demandados${rubro === 'técnico' || rubro === 'refrigeración' ? ' en temporadas de calor y frío' : ''} en nuestra comunidad.\n\nPara registrarte:\n1. Haz clic en “Crear cuenta”.\n2. Completa tus datos y selecciona tu especialidad.\n3. Sube tus certificaciones si tienes, ¡esto te dará más visibilidad!\n4. Una vez registrado/a, podrás recibir solicitudes de clientes cercanos.\n\n¡Te esperamos! Tu perfil será muy valorado.`;
-        } else {
-          response = `¡Por supuesto! Para crear tu cuenta sigue estos pasos:\n1. Haz clic en “Crear cuenta” en la pantalla principal.\n2. Ingresa tu email y elige una contraseña segura.\n3. Completa tus datos personales (nombre, teléfono, etc.).\n4. Confirma tu registro desde el correo que te enviaremos.\n¡Listo! Ya puedes acceder y comenzar a usar la app.`;
-        }
-      }
-      // Pregunta sobre funciones de la app
-      else if (/para qué sirve|qué puedo hacer|funciones|cómo funciona|ayuda/i.test(userText)) {
-        response = `Esta app te permite:\n- Solicitar servicios profesionales de manera rápida y segura.\n- Gestionar tus solicitudes y ver el estado de cada una.\n- Calificar a los profesionales y recibir notificaciones.\n- Acceder a soporte y ayuda personalizada.\n¿Quieres que te guíe en tu primer uso?`;
+        response = rubro
+          ? `¡Genial! Puedes registrarte como ${rubro}. Haz clic en “Registrarme” y completa tus datos.`
+          : '¡Genial! Haz clic en “Registrarme” y completa tus datos.';
       }
       // Pregunta sobre rubros, servicios, profesionales
       else if (/servicio|rubro|profesional|plomer|electricista|gasista|técnico|refrigeración|niñera|cuidador|jardinero|carpintero|cerrajero/i.test(userText)) {
@@ -178,15 +175,17 @@ if (aiAssistantForm) {
       else if (/ayuda|cómo/i.test(userText)) {
         response = 'Estoy aquí para ayudarte. Pregúntame sobre cualquier función de la app.';
       }
-      // Respuesta por defecto mejorada
-      else {
-        // Si el mensaje contiene dudas comunes sobre registro, igual responde con ayuda
-        if (/inscrib|registr|crear cuenta|abrir cuenta|alta|suscrib|unirme|sumarme|quiero ser parte|quiero entrar|quiero participar|quiero ofrecer/i.test(userText)) {
-          response = `¡Por supuesto! Para crear tu cuenta sigue estos pasos:\n1. Haz clic en “Crear cuenta” en la pantalla principal.\n2. Ingresa tu email y elige una contraseña segura.\n3. Completa tus datos personales (nombre, teléfono, etc.).\n4. Confirma tu registro desde el correo que te enviaremos.\n¡Listo! Ya puedes acceder y comenzar a usar la app.`;
-        } else {
-          response = '¡Gracias por tu consulta! Estoy aprendiendo y pronto podré ayudarte aún más.';
-        }
+      // Respuesta por defecto mejorada: cualquier pregunta sobre trabajo, CV, entrevistas, consejos, rubros, servicios, etc.
+      else if (/trabajo|empleo|oferta|busco|conseguir|consejo|curriculum|cv|entrevista|laboral|profesi/i.test(userText)) {
+        response = '¡Claro! Puedo orientarte sobre búsqueda de trabajo, armado de CV, entrevistas, rubros laborales, servicios ofrecidos, tarifas, oportunidades y más. Pregúntame lo que necesites sobre el mundo laboral.';
       }
+      // Respuesta por defecto
+      else {
+        response = '¡Gracias por tu consulta! Estoy aquí para ayudarte en todo lo relacionado al trabajo, servicios, oportunidades y la app. Pregúntame lo que quieras.';
+      }
+      appendAiMessage(response, 'bot');
+    }, 600);
+  });
       appendAiMessage(response, 'bot');
     }, 600);
   });
