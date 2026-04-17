@@ -200,31 +200,38 @@ body::selection {
   align-items: stretch;
 }
 
-.glass-panel {
+/* ASISTENTE IA ROBOT GRANDE Y VISIBLE */
+.ai-assistant {
+  position: fixed;
+  left: 32px;
+  bottom: 32px;
+  z-index: 1002;
+}
+.ai-assistant-btn {
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-}
-
-.hero-copy {
-  padding: 1.5rem;
-}
-
-.brand-banner {
-  display: inline-flex;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  font-size: 2.5rem;
+  color: var(--accent);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 0.9rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 16px;
-  border: 1px solid rgba(110, 242, 255, 0.22);
-  background: linear-gradient(135deg, rgba(110, 242, 255, 0.08), rgba(184, 107, 255, 0.08));
+  justify-content: center;
+  transition: box-shadow 0.2s, border 0.2s;
 }
-
-.brand-banner img {
-  width: 38px;
+.ai-assistant-btn img {
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+}
+.ai-assistant-btn:hover {
+  border-color: var(--accent-2);
+  box-shadow: 0 8px 32px var(--accent-2);
+}
   height: 38px;
   display: block;
 }
