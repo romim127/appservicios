@@ -137,8 +137,9 @@ if (aiAssistantForm) {
     setTimeout(() => {
       let response = '';
       // --- Lógica avanzada de onboarding y profesiones ---
-      // Detectar inscripción, registro, crear cuenta
-      if (/inscrib|registr|crear cuenta|abrir cuenta|alta/i.test(userText)) {
+      // Detección ampliada de inscripción, registro, crear cuenta
+      const inscripcionRegex = /inscrib|registr|crear cuenta|abrir cuenta|alta|suscrib|unirme|sumarme|quiero ser parte|quiero entrar|quiero participar|quiero ofrecer/i;
+      if (inscripcionRegex.test(userText)) {
         // Detectar si menciona profesión/rubro
         const matchProf = userText.match(/soy ([^.,;\n]+)/i);
         let rubro = '';
@@ -177,9 +178,14 @@ if (aiAssistantForm) {
       else if (/ayuda|cómo/i.test(userText)) {
         response = 'Estoy aquí para ayudarte. Pregúntame sobre cualquier función de la app.';
       }
-      // Respuesta por defecto
+      // Respuesta por defecto mejorada
       else {
-        response = '¡Gracias por tu consulta! Estoy aprendiendo y pronto podré ayudarte aún más.';
+        // Si el mensaje contiene dudas comunes sobre registro, igual responde con ayuda
+        if (/inscrib|registr|crear cuenta|abrir cuenta|alta|suscrib|unirme|sumarme|quiero ser parte|quiero entrar|quiero participar|quiero ofrecer/i.test(userText)) {
+          response = `¡Por supuesto! Para crear tu cuenta sigue estos pasos:\n1. Haz clic en “Crear cuenta” en la pantalla principal.\n2. Ingresa tu email y elige una contraseña segura.\n3. Completa tus datos personales (nombre, teléfono, etc.).\n4. Confirma tu registro desde el correo que te enviaremos.\n¡Listo! Ya puedes acceder y comenzar a usar la app.`;
+        } else {
+          response = '¡Gracias por tu consulta! Estoy aprendiendo y pronto podré ayudarte aún más.';
+        }
       }
       appendAiMessage(response, 'bot');
     }, 600);

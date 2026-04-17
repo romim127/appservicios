@@ -203,9 +203,13 @@ body::selection {
 /* ASISTENTE IA ROBOT GRANDE Y VISIBLE */
 .ai-assistant {
   position: fixed;
-  left: 32px;
-  bottom: 32px;
+  bottom: 40px;
+  right: 40px;
+  left: unset;
+  top: unset;
   z-index: 1002;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  transition: transform 0.2s;
 }
 .ai-assistant-btn {
   background: var(--panel);
@@ -223,17 +227,31 @@ body::selection {
   justify-content: center;
   transition: box-shadow 0.2s, border 0.2s;
 }
-.ai-assistant-btn img {
-  width: 64px;
-  height: 64px;
-  pointer-events: none;
+.ai-assistant-btn {
+  background: var(--panel);
+  border: 4px solid var(--accent);
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  padding: 0;
+  font-size: 3.2rem;
+  color: var(--accent);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 .ai-assistant-btn:hover {
-  border-color: var(--accent-2);
-  box-shadow: 0 8px 32px var(--accent-2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.32);
+  border-color: #fff176;
+  transform: scale(1.07);
 }
-  height: 38px;
-  display: block;
+.ai-assistant-btn img {
+  width: 90px;
+  height: 90px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.18));
 }
 
 .brand-banner strong {
