@@ -36,8 +36,29 @@ namespace AppServicios.Api.Controllers
             var password = request.Password ?? string.Empty;
 
             var usuario = await _context.Usuarios
-                .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == email);
+
+            bool loginExitoso = usuario != null && string.Equals(usuario.PasswordHash, password, StringComparison.Ordinal) && usuario.Activo;
+
+            // Captura IP y UserAgent
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = Request.Headers["User-Agent"].ToString();
+
+            // Registrar sesión
+            if (usuario != null)
+            {
+                var sesion = new Domain.SesionUsuario
+                {
+                    UsuarioId = usuario.Id,
+                    FechaInicio = DateTime.UtcNow,
+                    Ip = ip,
+                    UserAgent = userAgent,
+                    Exito = loginExitoso,
+                    MotivoCierre = loginExitoso ? null : (!usuario.Activo ? "Cuenta suspendida" : "Credenciales incorrectas")
+                };
+                _context.SesionesUsuario.Add(sesion);
+                await _context.SaveChangesAsync();
+            }
 
             if (usuario is null || !string.Equals(usuario.PasswordHash, password, StringComparison.Ordinal))
             {
@@ -66,35 +87,6 @@ namespace AppServicios.Api.Controllers
                 "Usuario",
                 usuario.Id,
                 usuario.Email);
-
-            return Ok(session);
-        }
-
-        [Authorize]
-        [HttpGet("usuarios/{userId:int}/context")]
-        public async Task<ActionResult<AuthSessionDto>> GetUserContext(int userId)
-        {
-            var claimUserId = GetAuthenticatedUserId();
-            if (!claimUserId.HasValue)
-            {
-                return Unauthorized("Token inválido o sesión expirada.");
-            }
-
-            if (claimUserId.Value != userId && !IsCurrentUserAdmin())
-            {
-                return Forbid();
-            }
-
-            var session = await BuildSessionAsync(userId);
-            if (session is null)
-            {
-                return NotFound();
-            }
-
-            if (!session.Activo)
-            {
-                return Unauthorized("La cuenta está suspendida. Contacta al administrador.");
-            }
 
             return Ok(session);
         }

@@ -23,6 +23,7 @@ namespace AppServicios.Api.Data
         public DbSet<AuditoriaEvento> AuditoriaEventos { get; set; }
         public DbSet<Certificado> Certificados { get; set; }
         public DbSet<Direccion> Direcciones { get; set; }
+    public DbSet<SesionUsuario> SesionesUsuario { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -114,6 +115,13 @@ namespace AppServicios.Api.Data
                 .HasOne(n => n.Usuario)
                 .WithMany(u => u.Notificaciones)
                 .HasForeignKey(n => n.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // SesionUsuario - Usuario
+            modelBuilder.Entity<SesionUsuario>()
+                .HasOne(s => s.Usuario)
+                .WithMany(u => u.SesionesUsuario)
+                .HasForeignKey(s => s.UsuarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AuditoriaEvento>()

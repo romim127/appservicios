@@ -27,5 +27,6 @@ namespace AppServicios.Api.Domain
         public Cliente? Cliente { get; set; }
         public ICollection<Notificacion> Notificaciones { get; set; } = new List<Notificacion>();
         public ICollection<AuditoriaEvento> AuditoriaEventos { get; set; } = new List<AuditoriaEvento>();
+        public ICollection<SesionUsuario> SesionesUsuario { get; set; } = new List<SesionUsuario>();
     }
 }

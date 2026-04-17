@@ -160,7 +160,7 @@ static string ConvertDatabaseUrlToNpgsql(string databaseUrl)
         Password = password,
         Database = uri.AbsolutePath.Trim('/'),
         SslMode = SslMode.Require,
-        TrustServerCertificate = true
+        // TrustServerCertificate eliminado: obsoleto en Npgsql >=7
     };
 
     return builder.ConnectionString;

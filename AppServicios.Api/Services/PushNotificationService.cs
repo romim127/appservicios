@@ -34,7 +34,7 @@ namespace AppServicios.Api.Services
             {
                 await webPushClient.SendNotificationAsync(subscription, payload, vapidDetails);
             }
-            catch (WebPush.WebPushException ex)
+            catch (WebPush.WebPushException)
             {
                 // Manejo de error: endpoint inválido, eliminar suscripción, etc.
                 // Log o acción según corresponda
