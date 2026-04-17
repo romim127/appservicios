@@ -54,7 +54,8 @@ namespace AppServicios.Api.Controllers
                     Ip = ip,
                     UserAgent = userAgent,
                     Exito = loginExitoso,
-                    MotivoCierre = loginExitoso ? null : (!usuario.Activo ? "Cuenta suspendida" : "Credenciales incorrectas")
+                    MotivoCierre = loginExitoso ? null : (!usuario.Activo ? "Cuenta suspendida" : "Credenciales incorrectas"),
+                    Usuario = usuario
                 };
                 _context.SesionesUsuario.Add(sesion);
                 await _context.SaveChangesAsync();
