@@ -6,7 +6,6 @@ const config: CapacitorConfig = {
   appId: 'com.appservicios.app',
   appName: 'AppServicios',
   webDir: 'AppServicios.Api/wwwroot',
-  bundledWebRuntime: false,
   server: {
     url: publicUrl,
     cleartext: false,
