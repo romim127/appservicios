@@ -4,6 +4,7 @@
   let isDragging = false;
   let offsetX = 0;
   let offsetY = 0;
+  let dragMoved = false;
 
   if (!ai) return;
 
@@ -12,6 +13,7 @@
 
   btn.addEventListener('mousedown', function(e) {
     isDragging = true;
+    dragMoved = false;
     offsetX = e.clientX - ai.getBoundingClientRect().left;
     offsetY = e.clientY - ai.getBoundingClientRect().top;
     ai.style.transition = 'none';
@@ -20,6 +22,7 @@
 
   document.addEventListener('mousemove', function(e) {
     if (!isDragging) return;
+    dragMoved = true;
     ai.style.left = 'unset';
     ai.style.top = 'unset';
     ai.style.right = 'auto';
@@ -36,4 +39,15 @@
       document.body.style.userSelect = '';
     }
   });
+
+  // Solo abrir el panel si no fue drag
+  btn.addEventListener('click', function(e) {
+    if (dragMoved) {
+      e.stopPropagation();
+      e.preventDefault();
+      dragMoved = false;
+      return;
+    }
+    // El click normal sigue funcionando para abrir/cerrar el panel
+  }, true);
 })();
