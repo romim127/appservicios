@@ -14,6 +14,9 @@ var defaultConnection = ResolveConnectionString(builder.Configuration, builder.E
 builder.Services.AddDbContext<AppServiciosDbContext>(options =>
     options.UseNpgsql(defaultConnection));
 
+// Registrar PushNotificationService
+builder.Services.AddSingleton<AppServicios.Api.Services.PushNotificationService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>

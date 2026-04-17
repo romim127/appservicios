@@ -26,6 +26,246 @@ if (currencySelect) {
 }
 // --- FIN MULTI-MONEDA ---
 // --- INTEGRACIÓN FLUJO ONBOARDING: mostrar app tras login/registro exitoso ---
+// --- ASISTENTE IA FLOTANTE ---
+// --- NOTIFICACIONES PUSH ---
+async function subscribeToPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const reg = await navigator.serviceWorker.ready;
+  let permission = Notification.permission;
+  if (permission !== 'granted') {
+    permission = await Notification.requestPermission();
+  }
+  if (permission !== 'granted') return;
+  let subscription = await reg.pushManager.getSubscription();
+  if (!subscription) {
+    // Reemplaza esta clave por tu VAPID public key
+    const vapidPublicKey = 'REEMPLAZAR_CON_TU_CLAVE_VAPID_PUBLICA';
+    const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: convertedVapidKey
+    });
+  }
+  // Enviar la suscripción al backend
+  if (currentSession && currentSession.usuarioId) {
+    const subJson = subscription.toJSON();
+    await fetch('/api/Push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuarioId: currentSession.usuarioId,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+      })
+    });
+  }
+  return subscription;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Llama a subscribeToPushNotifications() después de login/registro exitoso
+window.subscribeToPushNotifications = subscribeToPushNotifications;
+const aiVoicePrefVoice = document.getElementById('aiVoicePrefVoice');
+const aiVoicePrefMsg = document.getElementById('aiVoicePrefMsg');
+let aiVoiceMode = 'voz';
+
+function setAiVoiceMode(mode) {
+  aiVoiceMode = mode;
+  localStorage.setItem('ai-voice-mode', mode);
+}
+if (aiVoicePrefVoice) aiVoicePrefVoice.addEventListener('change', () => setAiVoiceMode('voz'));
+if (aiVoicePrefMsg) aiVoicePrefMsg.addEventListener('change', () => setAiVoiceMode('mensaje'));
+// Cargar preferencia guardada
+const savedVoiceMode = localStorage.getItem('ai-voice-mode');
+if (savedVoiceMode === 'mensaje') {
+  aiVoiceMode = 'mensaje';
+  if (aiVoicePrefMsg) aiVoicePrefMsg.checked = true;
+}
+
+function speakAi(text) {
+  if ('speechSynthesis' in window && aiVoiceMode === 'voz') {
+    const utter = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
+    utter.lang = 'es-AR';
+    window.speechSynthesis.speak(utter);
+  }
+}
+const aiAssistant = document.getElementById('aiAssistant');
+const aiAssistantBtn = document.getElementById('aiAssistantBtn');
+const aiAssistantPanel = document.getElementById('aiAssistantPanel');
+const aiAssistantClose = document.getElementById('aiAssistantClose');
+const aiAssistantMessages = document.getElementById('aiAssistantMessages');
+const aiAssistantForm = document.getElementById('aiAssistantForm');
+const aiAssistantInput = document.getElementById('aiAssistantInput');
+
+function showAiAssistantPanel() {
+  if (aiAssistantPanel) aiAssistantPanel.style.display = 'block';
+}
+function hideAiAssistantPanel() {
+  if (aiAssistantPanel) aiAssistantPanel.style.display = 'none';
+}
+if (aiAssistantBtn) aiAssistantBtn.addEventListener('click', showAiAssistantPanel);
+if (aiAssistantClose) aiAssistantClose.addEventListener('click', hideAiAssistantPanel);
+
+function appendAiMessage(text, from = 'bot') {
+  if (!aiAssistantMessages) return;
+  const div = document.createElement('div');
+  div.className = 'ai-message ai-message-' + from;
+  div.innerHTML = text;
+  aiAssistantMessages.appendChild(div);
+  aiAssistantMessages.scrollTop = aiAssistantMessages.scrollHeight;
+  if (from === 'bot' && aiVoiceMode === 'voz') speakAi(text);
+}
+
+if (aiAssistantForm) {
+  aiAssistantForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const userText = aiAssistantInput.value.trim();
+    if (!userText) return;
+    appendAiMessage(userText, 'user');
+    aiAssistantInput.value = '';
+    // Respuesta simple IA (puedes expandir lógica aquí)
+    setTimeout(() => {
+      let response = '';
+      if (/mapa|ubicaci[óo]n|cerca/i.test(userText)) {
+        response = '¿Quieres ver profesionales o solicitudes cerca tuyo? Haz click en el mapa o filtra por rubro.';
+      } else if (/servicio|rubro|profesional|plomer/i.test(userText)) {
+        response = '¿Buscas un servicio específico? Usa el buscador o explora los rubros destacados.';
+      } else if (/pagar|pago|tarifa|precio/i.test(userText)) {
+        response = 'Puedes ver y comparar precios en cada perfil. El pago es seguro y multi-moneda.';
+      } else if (/ayuda|cómo/i.test(userText)) {
+        response = 'Estoy aquí para ayudarte. Pregúntame sobre cualquier función de la app.';
+      } else {
+        response = '¡Gracias por tu consulta! Estoy aprendiendo y pronto podré ayudarte aún más.';
+      }
+      appendAiMessage(response, 'bot');
+    }, 600);
+  });
+}
+
+// Mensaje proactivo al abrir mapa (sin redeclarar mapStatus)
+if (typeof mapStatus !== 'undefined' && mapStatus) {
+  mapStatus.addEventListener('DOMSubtreeModified', function() {
+    if (aiAssistantMessages && aiAssistantPanel && aiAssistantPanel.style.display !== 'block') {
+      appendAiMessage('¿Quieres ver profesionales o clientes cerca tuyo en el mapa? Usa los filtros o pregúntame aquí.', 'bot');
+    }
+  });
+}
+
+// --- FIN ASISTENTE IA FLOTANTE ---
+// Ejemplo de recordatorio proactivo al iniciar sesión
+// Mensaje IA proactivo si el usuario no ha interactuado hoy
+document.addEventListener('DOMContentLoaded', function() {
+    // --- AVISOS IA PROACTIVOS ---
+    // Simulación de datos de usuario y actividad
+    const userRole = (currentSession && currentSession.rol) || '';
+    // --- AVISOS IA REALES ---
+    // userId ya declarado arriba
+    if (userRole === 'profesional' && userId) {
+      // Citas próximas (solicitudes aceptadas con fecha hoy o futura)
+      fetch(`/api/SolicitudesTrabajo?userId=${userId}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          const hoy = new Date().toISOString().slice(0, 10);
+          const citas = (data || []).filter(s => s.estado === 'Aceptado' && s.fechaRequerida && s.fechaRequerida.slice(0,10) >= hoy);
+          if (citas.length > 0) {
+            setTimeout(() => {
+              appendAiMessage(`Recuerda: tienes una cita hoy a las ${citas[0].fechaRequerida.slice(11,16)} con ${citas[0].clienteNombre} (${citas[0].servicioNombre}). ¿Quieres que te avise 10 minutos antes?`, 'bot');
+            }, 8000);
+          }
+          // Objetivo mensual (simulado: objetivo 10 trabajos/mes)
+          const mes = hoy.slice(0,7);
+          const trabajosMes = (data || []).filter(s => s.estado === 'Completado' && s.fechaCompletacion && s.fechaCompletacion.slice(0,7) === mes);
+          if (trabajosMes.length < 10) {
+            setTimeout(() => {
+              appendAiMessage(`¡Vas al ${Math.round(trabajosMes.length / 10 * 100)}% de tu objetivo mensual! ¿Quieres ver oportunidades para sumar más trabajos?`, 'bot');
+            }, 10000);
+          }
+          // Mensajes sin responder (simulado: solicitudes aceptadas sin fecha completada)
+          const sinResponder = (data || []).filter(s => s.estado === 'Aceptado' && !s.fechaCompletacion);
+          if (sinResponder.length > 0) {
+            setTimeout(() => {
+              appendAiMessage(`Tienes trabajos aceptados sin marcar como completados. ¿Quieres gestionarlos ahora?`, 'bot');
+            }, 12000);
+          }
+        });
+    }
+    if (userRole === 'cliente' && userId) {
+      // Seguimiento de última solicitud
+      fetch(`/api/SolicitudesTrabajo?userId=${userId}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          const ultima = (data || []).find(s => s.estado === 'Pendiente' || s.estado === 'Aceptado');
+          if (ultima) {
+            setTimeout(() => {
+              appendAiMessage('¿Quieres hacer seguimiento a tu última solicitud o necesitas ayuda para elegir profesional?', 'bot');
+            }, 9000);
+          }
+        });
+    }
+    // --- FIN AVISOS IA PROACTIVOS ---
+  // Notificación IA si hay solicitud relevante para el perfil (para todos los perfiles, usando datos reales)
+  // userProfile y userName ya declarados arriba
+  // userId ya declarado arriba
+  if (userProfile && userName && userId) {
+    fetch(`/api/SolicitudesTrabajo?userId=${userId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        // Buscar solicitudes pendientes que coincidan con el perfil/rubro/servicio del usuario
+        const match = (data || []).find(s => {
+          // Coincidencia flexible: servicioNombre, rubroNombre, descripcion
+          const fields = [s.servicioNombre, s.rubroNombre, s.descripcion].join(' ').toLowerCase();
+          return userProfile && fields.includes(userProfile.toLowerCase()) && s.estado === 'Pendiente';
+        });
+        if (match) {
+          setTimeout(() => {
+            appendAiMessage(`${userName}, ha salido una solicitud real que coincide con tu perfil: "${match.servicioNombre}" en ${match.ubicacion || 'zona a definir'}: "${match.descripcion || 'Sin descripción'}"`, 'bot');
+          }, 6000);
+        }
+      });
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const lastActive = localStorage.getItem('ai-last-active') || '';
+  // userName y userProfile ya declarados arriba
+  let proactiveMsg = '';
+  // Aviso si no interactuó hoy
+  if (lastActive !== today) {
+    if (userName && /maria/i.test(userName)) {
+      proactiveMsg = 'María, ¿vas a seguir en la búsqueda del plomero o vas a dejar que la casa se inunde? 😅';
+    } else if (userName && /juan/i.test(userName)) {
+      proactiveMsg = 'Juan, ¿vas a trabajar hoy o prefieres buscar nuevas oportunidades?';
+    } else {
+      proactiveMsg = '¡Ey! ¿Vas a trabajar hoy, buscar algo, o necesitas ayuda para avanzar? ¡Estoy lista para ayudarte!';
+    }
+    setTimeout(() => {
+      appendAiMessage(proactiveMsg, 'bot');
+      localStorage.setItem('ai-last-active', today);
+    }, 3500);
+  }
+  // Aviso de solicitud relevante para el perfil (siempre, aunque esté activo)
+  const solicitudes = [
+    { servicio: 'Pintor', mensaje: 'Se busca pintor para trabajo en zona centro.' },
+    { servicio: 'Gasista', mensaje: 'Urgente: instalación de gas en departamento.' },
+    { servicio: 'Electricista', mensaje: 'Reparación eléctrica en casa particular.' },
+    { servicio: 'Cuida niños', mensaje: 'Familia busca niñera para tardes.' }
+  ];
+  const match = solicitudes.find(s => new RegExp(s.servicio, 'i').test(userProfile));
+  if (userName && match) {
+    setTimeout(() => {
+      appendAiMessage(`${userName}, ha salido una solicitud de trabajo que podría dar con tu perfil de ${match.servicio.toLowerCase()}: "${match.mensaje}"`, 'bot');
+    }, 6000);
+  }
+});
 function showAppAfterAuth() {
   const wizard = document.getElementById('wizardEntry');
   const header = document.getElementById('mainAppHeader');

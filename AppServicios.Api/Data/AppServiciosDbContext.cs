@@ -19,6 +19,7 @@ namespace AppServicios.Api.Data
         public DbSet<MensajeSolicitud> MensajesSolicitud { get; set; }
         public DbSet<PagoProfesional> PagosProfesionales { get; set; }
         public DbSet<Notificacion> Notificaciones { get; set; }
+        public DbSet<PushSubscription> PushSubscriptions { get; set; }
         public DbSet<AuditoriaEvento> AuditoriaEventos { get; set; }
         public DbSet<Certificado> Certificados { get; set; }
         public DbSet<Direccion> Direcciones { get; set; }
