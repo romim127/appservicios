@@ -134,18 +134,51 @@ if (aiAssistantForm) {
     if (!userText) return;
     appendAiMessage(userText, 'user');
     aiAssistantInput.value = '';
-    // Respuesta simple IA (puedes expandir lógica aquí)
     setTimeout(() => {
       let response = '';
-      if (/mapa|ubicaci[óo]n|cerca/i.test(userText)) {
-        response = '¿Quieres ver profesionales o solicitudes cerca tuyo? Haz click en el mapa o filtra por rubro.';
-      } else if (/servicio|rubro|profesional|plomer/i.test(userText)) {
-        response = '¿Buscas un servicio específico? Usa el buscador o explora los rubros destacados.';
-      } else if (/pagar|pago|tarifa|precio/i.test(userText)) {
+      // --- Lógica avanzada de onboarding y profesiones ---
+      // Detectar inscripción, registro, crear cuenta
+      if (/inscrib|registr|crear cuenta|abrir cuenta|alta/i.test(userText)) {
+        // Detectar si menciona profesión/rubro
+        const matchProf = userText.match(/soy ([^.,;\n]+)/i);
+        let rubro = '';
+        if (matchProf && matchProf[1]) {
+          rubro = matchProf[1].trim();
+        } else {
+          // Buscar palabras clave de rubros comunes
+          const rubros = ['plomero', 'electricista', 'gasista', 'pintor', 'técnico', 'refrigeración', 'niñera', 'cuidador', 'jardinero', 'carpintero', 'cerrajero', 'profesional', 'servicio'];
+          for (let r of rubros) {
+            if (userText.toLowerCase().includes(r)) { rubro = r; break; }
+          }
+        }
+        if (rubro) {
+          response = `¡Claro que sí puedes inscribirte! Los/as ${rubro}s son muy demandados${rubro === 'técnico' || rubro === 'refrigeración' ? ' en temporadas de calor y frío' : ''} en nuestra comunidad.\n\nPara registrarte:\n1. Haz clic en “Crear cuenta”.\n2. Completa tus datos y selecciona tu especialidad.\n3. Sube tus certificaciones si tienes, ¡esto te dará más visibilidad!\n4. Una vez registrado/a, podrás recibir solicitudes de clientes cercanos.\n\n¡Te esperamos! Tu perfil será muy valorado.`;
+        } else {
+          response = `¡Por supuesto! Para crear tu cuenta sigue estos pasos:\n1. Haz clic en “Crear cuenta” en la pantalla principal.\n2. Ingresa tu email y elige una contraseña segura.\n3. Completa tus datos personales (nombre, teléfono, etc.).\n4. Confirma tu registro desde el correo que te enviaremos.\n¡Listo! Ya puedes acceder y comenzar a usar la app.`;
+        }
+      }
+      // Pregunta sobre funciones de la app
+      else if (/para qué sirve|qué puedo hacer|funciones|cómo funciona|ayuda/i.test(userText)) {
+        response = `Esta app te permite:\n- Solicitar servicios profesionales de manera rápida y segura.\n- Gestionar tus solicitudes y ver el estado de cada una.\n- Calificar a los profesionales y recibir notificaciones.\n- Acceder a soporte y ayuda personalizada.\n¿Quieres que te guíe en tu primer uso?`;
+      }
+      // Pregunta sobre rubros, servicios, profesionales
+      else if (/servicio|rubro|profesional|plomer|electricista|gasista|técnico|refrigeración|niñera|cuidador|jardinero|carpintero|cerrajero/i.test(userText)) {
+        response = '¿Buscas un servicio específico? Usa el buscador o explora los rubros destacados. Si eres profesional, ¡puedes registrarte y ofrecer tus servicios!';
+      }
+      // Pregunta sobre pagos
+      else if (/pagar|pago|tarifa|precio/i.test(userText)) {
         response = 'Puedes ver y comparar precios en cada perfil. El pago es seguro y multi-moneda.';
-      } else if (/ayuda|cómo/i.test(userText)) {
+      }
+      // Pregunta sobre ubicación/mapa
+      else if (/mapa|ubicaci[óo]n|cerca/i.test(userText)) {
+        response = '¿Quieres ver profesionales o solicitudes cerca tuyo? Haz click en el mapa o filtra por rubro.';
+      }
+      // Pregunta genérica de ayuda
+      else if (/ayuda|cómo/i.test(userText)) {
         response = 'Estoy aquí para ayudarte. Pregúntame sobre cualquier función de la app.';
-      } else {
+      }
+      // Respuesta por defecto
+      else {
         response = '¡Gracias por tu consulta! Estoy aprendiendo y pronto podré ayudarte aún más.';
       }
       appendAiMessage(response, 'bot');
