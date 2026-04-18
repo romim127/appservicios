@@ -255,12 +255,10 @@ static async Task EnsureDemoAdminAsync(AppServiciosDbContext db)
         db.Profesionales.Add(new Profesional
         {
             UsuarioId = proUsuario.Id,
-            Sector = "CONSTRUCCION Y SERVICIOS GENERALES",
-            Experiencia = 8,
-            Calificacion = 4.7m,
+            AñosExperiencia = 8,
+            CalificacionPromedio = 4.7m,
             TarifaBase = 30000,
-            RadioCobertura = 20,
-            Disponible = true,
+            RadioAlcanceKm = 20,
             Ubicacion = "Buenos Aires, Argentina"
         });
     }
