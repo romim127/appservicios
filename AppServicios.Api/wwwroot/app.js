@@ -186,9 +186,6 @@ if (aiAssistantForm) {
       appendAiMessage(response, 'bot');
     }, 600);
   });
-      appendAiMessage(response, 'bot');
-    }, 600);
-  });
 }
 
 // Mensaje proactivo al abrir mapa (sin redeclarar mapStatus)
