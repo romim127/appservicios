@@ -199,6 +199,73 @@ static async Task EnsureDemoAdminAsync(AppServiciosDbContext db)
     }
 
     await db.SaveChangesAsync();
+
+    // --- Usuario de prueba: Cliente ---
+    const string testClientEmail = "cliente@servilab.com";
+    const string testClientPassword = "Cliente123!";
+    var testClient = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == testClientEmail);
+    if (testClient is null)
+    {
+        var clienteUsuario = new Usuario
+        {
+            Nombre = "Carlos Prueba",
+            Email = testClientEmail,
+            Telefono = "1155667788",
+            DNI = "33444555",
+            FechaNacimiento = new DateTime(1992, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+            Rol = "Cliente",
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow,
+            PasswordHash = testClientPassword,
+            VerificadoRenaper = false,
+            RecibeNotificaciones = true
+        };
+        db.Usuarios.Add(clienteUsuario);
+        await db.SaveChangesAsync();
+        db.Clientes.Add(new Cliente
+        {
+            UsuarioId = clienteUsuario.Id,
+            Ubicacion = "Buenos Aires, Argentina"
+        });
+    }
+
+    // --- Usuario de prueba: Profesional ---
+    const string testProEmail = "profesional@servilab.com";
+    const string testProPassword = "Profesional123!";
+    var testPro = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == testProEmail);
+    if (testPro is null)
+    {
+        var proUsuario = new Usuario
+        {
+            Nombre = "Laura Servicios",
+            Email = testProEmail,
+            Telefono = "1199887766",
+            DNI = "28999111",
+            FechaNacimiento = new DateTime(1988, 9, 20, 0, 0, 0, DateTimeKind.Utc),
+            Rol = "Profesional",
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow,
+            PasswordHash = testProPassword,
+            VerificadoRenaper = true,
+            FechaVerificacion = DateTime.UtcNow,
+            RecibeNotificaciones = true
+        };
+        db.Usuarios.Add(proUsuario);
+        await db.SaveChangesAsync();
+        db.Profesionales.Add(new Profesional
+        {
+            UsuarioId = proUsuario.Id,
+            Sector = "CONSTRUCCION Y SERVICIOS GENERALES",
+            Experiencia = 8,
+            Calificacion = 4.7m,
+            TarifaBase = 30000,
+            RadioCobertura = 20,
+            Disponible = true,
+            Ubicacion = "Buenos Aires, Argentina"
+        });
+    }
+
+    await db.SaveChangesAsync();
 }
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

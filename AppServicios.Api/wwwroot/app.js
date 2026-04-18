@@ -315,6 +315,15 @@ function showAppAfterAuth() {
 // Hook para login exitoso
 async function handleLoginAndShowApp(e) {
   e.preventDefault();
+  // Copiar valores del wizard a los inputs reales de login
+  const wizEmail = document.getElementById('wizardEmail');
+  const wizPass = document.getElementById('wizardPassword');
+  if (wizEmail && wizEmail.value && loginEmailInput) {
+    loginEmailInput.value = wizEmail.value;
+  }
+  if (wizPass && wizPass.value && loginPasswordInput) {
+    loginPasswordInput.value = wizPass.value;
+  }
   await handleLogin();
   if (currentSession) showAppAfterAuth();
 }

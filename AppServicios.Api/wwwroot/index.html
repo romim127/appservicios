@@ -73,9 +73,9 @@
         <form id="loginForm" class="step-form">
           <div class="step step-login active">
             <label>Email</label>
-            <input type="email" placeholder="Tu email" required />
+            <input id="wizardEmail" type="email" placeholder="Tu email" required />
             <label>Contraseña</label>
-            <input type="password" placeholder="Contraseña" required />
+            <input id="wizardPassword" type="password" placeholder="Contraseña" required />
             <button type="submit" id="wizardFinishBtn">Ingresar</button>
             <div class="step-links">
               <span>¿No tienes cuenta?</span>
@@ -1212,25 +1212,6 @@
   <div class="toast-host" id="notificationToastHost" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="/app.js"></script>
-  <script>
-    // Mostrar solo el wizard al inicio, y mostrar la app solo tras login/registro exitoso
-    function onWizardComplete() {
-      document.getElementById('wizardEntry').style.display = 'none';
-      document.getElementById('mainAppHeader').style.display = '';
-      document.getElementById('inicio').style.display = '';
-      document.getElementById('mainAppFooter').style.display = '';
-    }
-    // Suponiendo que el botón final del wizard tiene id="wizardFinishBtn":
-    document.addEventListener('DOMContentLoaded', function() {
-      var finishBtn = document.getElementById('wizardFinishBtn');
-      if (finishBtn) {
-        finishBtn.addEventListener('click', function() {
-          onWizardComplete();
-        });
-      }
-    });
-  </script>
   <script src="/app.js"></script>
   <script src="/ai-assistant-drag.js"></script>
 </body>
